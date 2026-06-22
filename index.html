@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudentCare Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --emerald-primary: #059669;
+            --emerald-dark: #064e3b;
+            --emerald-light: #ecfdf5;
+            --cream-bg: #fcfbf8;
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: var(--cream-bg);
+            color: #1f2937;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Glassmorphism */
+        .sidebar {
+            background: linear-gradient(180deg, var(--emerald-dark) 0%, var(--emerald-primary) 100%);
+            transition: all 0.3s ease;
+        }
+
+        .menu-item {
+            transition: all 0.2s;
+            border-radius: 12px;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+            transform: translateX(5px);
+        }
+
+        /* Card Styles (Premium UI) */
+        .glass-card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(5, 150, 105, 0.1);
+        }
+
+        /* Wizard Progress */
+        .step-circle {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .step-active {
+            background-color: var(--emerald-primary);
+            color: white;
+            box-shadow: 0 0 15px rgba(5, 150, 105, 0.4);
+        }
+
+        /* Table NorRor 01 */
+        .table-nr01 {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 12px;
+            min-width: 900px;
+        }
+        .table-nr01 th, .table-nr01 td {
+            border: 1px solid #333;
+            padding: 8px 4px;
+            text-align: center;
+            height: 48px;
+        }
+        .table-nr01 th {
+            background-color: #f3f4f6;
+        }
+
+        /* Signature Canvas */
+        .sig-canvas {
+            border: 2px dashed #ccc;
+            background: #fff;
+            cursor: crosshair;
+        }
+
+        /* Print A4 */
+        @media print {
+            body { background: white; }
+            .no-print { display: none !important; }
+            .print-area { display: block !important; padding: 0; margin: 0; }
+            .page-break { page-break-after: always; }
+            .glass-card { box-shadow: none; border: none; }
+        }
+
+        input[readonly] {
+            background-color: #f3f4f6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <aside class="sidebar w-64 fixed h-full text-white p-6 z-50 no-print">
+        <div class="flex items-center gap-3 mb-10">
+            <div class="bg-white p-2 rounded-xl shadow-lg">
+                <i class="fas fa-graduation-cap text-emerald-600 text-2xl"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight">StudentCare <span class="font-light">Pro</span></h1>
+        </div>
+
+        <nav class="space-y-2">
+            <p class="text-emerald-200 text-xs font-semibold uppercase tracking-widest mb-4 opacity-70">หมวดที่ 1: เมนูหลัก</p>
+            <a href="#" onclick="showSection('dashboard')" class="menu-item active flex items-center gap-3 py-3 px-4">
+                <i class="fas fa-th-large w-5"></i> ภาพรวมระบบ
+            </a>
+            <a href="#" onclick="showSection('students')" class="menu-item flex items-center gap-3 py-3 px-4">
+                <i class="fas fa-user-group w-5"></i> จัดการนักเรียน
+            </a>
+
+            <p class="text-emerald-200 text-xs font-semibold uppercase tracking-widest mt-8 mb-4 opacity-70">หมวดที่ 2: งานช่วยเหลือ</p>
+            <a href="#" onclick="showSection('homevisit')" class="menu-item flex items-center gap-3 py-3 px-4">
+                <i class="fas fa-house-chimney w-5"></i> ระบบเยี่ยมบ้าน
+            </a>
+            <a href="#" onclick="showSection('nr01')" class="menu-item flex items-center gap-3 py-3 px-4">
+                <i class="fas fa-file-contract w-5"></i> คัดกรอง นร.01
+            </a>
+            <a href="#" onclick="showSection('health')" class="menu-item flex items-center gap-3 py-3 px-4">
+                <i class="fas fa-heart-pulse w-5"></i> สุขภาพ (BMI)
+            </a>
+
+            <p class="text-emerald-200 text-xs font-semibold uppercase tracking-widest mt-8 mb-4 opacity-70">หมวดที่ 3: เอกสาร & ตั้งค่า</p>
+            <a href="#" onclick="showSection('reports')" class="menu-item flex items-center gap-3 py-3 px-4">
+                <i class="fas fa-print w-5"></i> รายงาน PDF
+            </a>
+            <a href="#" onclick="showSection('settings')" class="menu-item flex items-center gap-3 py-3 px-4">
+                <i class="fas fa-sliders w-5"></i> การตั้งค่า
+            </a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 ml-64 p-8 no-print" id="main-view">
+        <header class="flex justify-between items-center mb-8">
+            <h2 id="view-title" class="text-2xl font-semibold text-emerald-900">ภาพรวมระบบ</h2>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <p id="current-teacher" class="text-sm font-medium text-gray-800">ไพโรจน์ รุ่งเรืองคุณารักษ์</p>
+                    <p id="current-school" class="text-xs text-emerald-600">โรงเรียนบ้านซับก้านเหลือง</p>
+                </div>
+                <img src="https://ui-avatars.com/api/?name=ไพโรจน์&background=059669&color=fff" class="w-10 h-10 rounded-full border-2 border-white shadow-sm">
+            </div>
+        </header>
+
+        <section id="dashboard-section" class="content-section">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="glass-card p-6 bg-emerald-50">
+                    <p class="text-gray-500 text-sm font-medium">นักเรียนทั้งหมด</p>
+                    <h3 class="text-3xl font-bold text-emerald-700 mt-2" id="dash-total">0</h3>
+                    <div class="mt-4 text-xs text-emerald-600 bg-white inline-block px-2 py-1 rounded-lg">เชื่อมต่อฐานข้อมูลแล้ว</div>
+                </div>
+                <div class="glass-card p-6">
+                    <p class="text-gray-500 text-sm font-medium">เยี่ยมบ้านแล้ว</p>
+                    <h3 class="text-3xl font-bold text-gray-800 mt-2" id="dash-visited">0</h3>
+                </div>
+                <div class="glass-card p-6">
+                    <p class="text-gray-500 text-sm font-medium">คัดกรอง นร.01 แล้ว</p>
+                    <h3 class="text-3xl font-bold text-gray-800 mt-2" id="dash-nr01">0</h3>
+                </div>
+                <div class="glass-card p-6">
+                    <p class="text-gray-500 text-sm font-medium">BMI ปกติ</p>
+                    <h3 class="text-3xl font-bold text-gray-800 mt-2" id="dash-bmi">0%</h3>
+                </div>
+            </div>
+        </section>
+
+        <section id="students-section" class="content-section hidden">
+            <div class="glass-card overflow-hidden">
+                <div class="p-6 border-b flex justify-between items-center bg-emerald-50/30">
+                    <h3 class="font-bold text-emerald-900">รายชื่อนักเรียน</h3>
+                    <div class="flex gap-2">
+                        <button class="bg-white border border-emerald-200 text-emerald-700 px-4 py-2 rounded-xl text-sm hover:bg-emerald-50 transition">
+                            <i class="fas fa-file-import mr-2"></i> นำเข้าข้อมูล
+                        </button>
+                        <button onclick="addMockStudent()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-emerald-700 shadow-md transition">
+                            <i class="fas fa-plus mr-2"></i> เพิ่มนักเรียน
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 text-gray-600 text-xs uppercase">
+                            <tr>
+                                <th class="px-6 py-4">เลขประจำตัวประชาชน</th>
+                                <th class="px-6 py-4">ชื่อ - นามสกุล</th>
+                                <th class="px-6 py-4">ชั้นเรียน</th>
+                                <th class="px-6 py-4">สถานะคัดกรอง</th>
+                                <th class="px-6 py-4 text-center">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-table-body" class="divide-y text-sm">
+                            <tr><td colspan="5" class="p-6 text-center text-gray-400">กำลังโหลดข้อมูลจาก Supabase...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="homevisit-section" class="content-section hidden">
+            <div class="glass-card p-6">
+                <div class="flex gap-2 mb-6">
+                    <button class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm">ทั้งหมด</button>
+                    <button class="bg-gray-100 text-gray-600 hover:bg-gray-200 px-4 py-2 rounded-xl text-sm font-medium">เยี่ยมแล้ว</button>
+                    <button class="bg-gray-100 text-gray-600 hover:bg-gray-200 px-4 py-2 rounded-xl text-sm font-medium">ยังไม่เยี่ยม</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50 text-gray-600 text-xs uppercase">
+                            <tr>
+                                <th class="p-4 border-b">นักเรียน</th>
+                                <th class="p-4 border-b">วันที่เยี่ยม</th>
+                                <th class="p-4 border-b">ปัญหาที่พบ</th>
+                                <th class="p-4 border-b text-center">ดำเนินการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="visit-table-body" class="text-sm">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="nr01-section" class="content-section hidden">
+            <div class="glass-card p-8">
+                <div class="flex justify-between mb-12 max-w-4xl mx-auto overflow-x-auto py-4">
+                    <div class="text-center"><div class="step-circle step-active mx-auto" id="step-1-btn">1</div><p class="text-[10px] mt-2">นักเรียน</p></div>
+                    <div class="text-center"><div class="step-circle bg-gray-200 mx-auto" id="step-2-btn">2</div><p class="text-[10px] mt-2">สมาชิก</p></div>
+                    <div class="text-center"><div class="step-circle bg-gray-200 mx-auto" id="step-3-btn">3</div><p class="text-[10px] mt-2">สถานะบ้าน</p></div>
+                    <div class="text-center"><div class="step-circle bg-gray-200 mx-auto" id="step-4-btn">4</div><p class="text-[10px] mt-2">เดินทาง/พิกัด</p></div>
+                    <div class="text-center"><div class="step-circle bg-gray-200 mx-auto" id="step-5-btn">5</div><p class="text-[10px] mt-2">รับรองข้อมูล</p></div>
+                </div>
+
+                <form id="nr01-form" class="max-w-5xl mx-auto">
+                    <div class="wizard-step" id="step-1">
+                        <h4 class="text-lg font-bold text-emerald-800 mb-6 border-l-4 border-emerald-500 pl-4">ข้อมูลนักเรียนและครอบครัว</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-gray-700">เลือกนักเรียน</label>
+                                <select class="w-full border rounded-xl p-3 bg-emerald-50 focus:ring-2 focus:ring-emerald-500 outline-none" required>
+                                    <option value="">-- กรุณาเลือก --</option>
+                                    <option>ด.ช. ภูผา รักเรียน</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-gray-700">สถานภาพครอบครัว</label>
+                                <select class="w-full border rounded-xl p-3 outline-none" required>
+                                    <option value="">-- กรุณาเลือก --</option>
+                                    <option>พ่อแม่อยู่ด้วยกัน</option><option>พ่อแม่หย่าร้าง</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wizard-step hidden" id="step-2">
+                        <h4 class="text-lg font-bold text-emerald-800 mb-6 border-l-4 border-emerald-500 pl-4">สมาชิกในครัวเรือน (รวมนักเรียน)</h4>
+                        <div class="overflow-x-auto rounded-xl border border-gray-200">
+                            <table class="table-nr01 w-full" id="members-table">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2" class="w-10">คนที่</th>
+                                        <th rowspan="2" class="w-48">ชื่อ - นามสกุล</th>
+                                        <th rowspan="2">ความสัมพันธ์</th>
+                                        <th rowspan="2">การศึกษา</th>
+                                        <th rowspan="2" class="w-12">อายุ</th>
+                                        <th colspan="2">รายได้เฉลี่ยต่อเดือน (บาท)</th>
+                                        <th rowspan="2">รวมรายได้</th>
+                                    </tr>
+                                    <tr>
+                                        <th>เงินเดือน</th>
+                                        <th>อื่น ๆ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="member-rows">
+                                    </tbody>
+                                <tfoot class="bg-emerald-50 font-bold">
+                                    <tr>
+                                        <td colspan="7" class="text-right py-3 text-emerald-900">รายได้ครัวเรือนเฉลี่ยต่อคน:</td>
+                                        <td id="avg-household-income" class="bg-white text-emerald-700 text-center">0.00</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mt-12 flex justify-between border-t pt-8">
+                        <button type="button" id="prevBtn" onclick="nextPrev(-1)" class="bg-gray-200 text-gray-700 px-8 py-3 rounded-xl font-semibold opacity-0 pointer-events-none">ย้อนกลับ</button>
+                        <button type="button" id="nextBtn" onclick="nextPrev(1)" class="bg-emerald-600 text-white px-10 py-3 rounded-xl font-semibold shadow-emerald-200 shadow-lg hover:bg-emerald-700">ถัดไป <i class="fas fa-chevron-right ml-2"></i></button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section id="health-section" class="content-section hidden">
+            <div class="glass-card p-6">
+                <h3 class="font-bold text-emerald-900 mb-4">ระบบคำนวณและบันทึกดัชนีมวลกาย (BMI)</h3>
+                <table class="w-full text-left text-sm border-collapse">
+                    <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+                        <tr>
+                            <th class="p-4">นักเรียน</th>
+                            <th class="p-4 text-center">น้ำหนัก (กก.)</th>
+                            <th class="p-4 text-center">ส่วนสูง (ซม.)</th>
+                            <th class="p-4 text-center">BMI</th>
+                            <th class="p-4 text-center">ผลลัพธ์</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y" id="bmi-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="reports-section" class="content-section hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-card p-8 text-center border-t-4 border-blue-500">
+                    <i class="fas fa-file-pdf text-5xl text-blue-500 mb-4"></i>
+                    <h3 class="font-bold text-lg">รายงานสรุป BMI</h3>
+                    <p class="text-sm text-gray-500 mb-6">พิมพ์ใบสรุปสถิติน้ำหนักส่วนสูงของชั้นเรียน</p>
+                    <button class="bg-blue-600 text-white px-6 py-3 rounded-xl w-full font-medium hover:bg-blue-700">สั่งพิมพ์เอกสาร A4</button>
+                </div>
+                <div class="glass-card p-8 text-center border-t-4 border-emerald-500">
+                    <i class="fas fa-file-contract text-5xl text-emerald-500 mb-4"></i>
+                    <h3 class="font-bold text-lg">แบบฟอร์ม นร.01</h3>
+                    <p class="text-sm text-gray-500 mb-6">พิมพ์แบบคัดกรอง 5 หน้าแยกรายบุคคล</p>
+                    <button class="bg-emerald-600 text-white px-6 py-3 rounded-xl w-full font-medium hover:bg-emerald-700">สั่งพิมพ์เอกสาร A4</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="settings-section" class="content-section hidden">
+            <div class="glass-card p-8 max-w-2xl mx-auto">
+                <h3 class="text-xl font-bold text-emerald-900 border-l-4 border-emerald-500 pl-4 mb-8">ตั้งค่าระบบ & ฐานข้อมูล Supabase</h3>
+                <div class="space-y-6">
+                    <div class="bg-gray-50 p-6 rounded-2xl border">
+                        <label class="block text-sm font-medium mb-2 text-gray-700">Supabase Project URL</label>
+                        <input type="text" id="sb-url" class="w-full border rounded-xl p-3 outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-sm" placeholder="https://xxxx.supabase.co">
+                        
+                        <label class="block text-sm font-medium mb-2 mt-4 text-gray-700">Supabase Anon Key</label>
+                        <input type="password" id="sb-key" class="w-full border rounded-xl p-3 outline-none focus:ring-2 focus:ring-emerald-500 font-mono text-sm" placeholder="eyJhbGciOiJIUzI1Ni...">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-700">ชื่อโรงเรียน (แสดงในหัวกระดาษ)</label>
+                        <input type="text" id="school-name" class="w-full border rounded-xl p-3 outline-none" value="โรงเรียนบ้านซับก้านเหลือง">
+                    </div>
+
+                    <button onclick="saveSettings()" class="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-emerald-700 transition">บันทึกการตั้งค่า</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- 1. UI Navigation & Wizard Logic ---
+        let currentTab = 0;
+        
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(sectionId + '-section').classList.remove('hidden');
+            
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            const titles = {
+                dashboard: 'ภาพรวมระบบ', students: 'จัดการนักเรียน', homevisit: 'ระบบเยี่ยมบ้าน',
+                nr01: 'คัดกรอง นร.01', health: 'สุขภาพ (BMI)', reports: 'รายงาน PDF', settings: 'การตั้งค่า'
+            };
+            document.getElementById('view-title').innerText = titles[sectionId];
+        }
+
+        function nextPrev(n) {
+            const steps = document.querySelectorAll('.wizard-step');
+            steps[currentTab].classList.add('hidden');
+            currentTab += n;
+            
+            if (currentTab >= steps.length) {
+                Swal.fire('สำเร็จ', 'บันทึก นร.01 เรียบร้อย', 'success');
+                showSection('dashboard');
+                currentTab = 0;
+            } else {
+                steps[currentTab].classList.remove('hidden');
+                document.getElementById('prevBtn').style.opacity = currentTab === 0 ? "0" : "1";
+                document.getElementById('prevBtn').style.pointerEvents = currentTab === 0 ? "none" : "auto";
+                document.getElementById('nextBtn').innerHTML = currentTab === steps.length - 1 ? 'บันทึกข้อมูล' : 'ถัดไป <i class="fas fa-chevron-right ml-2"></i>';
+                
+                for(let i=1; i<=5; i++){
+                    let btn = document.getElementById(`step-${i}-btn`);
+                    if(btn) {
+                        if(i-1 === currentTab) btn.classList.add('step-active');
+                        else btn.classList.remove('step-active');
+                    }
+                }
+            }
+        }
+
+        // --- 2. Table Generators (10 Rows for Nr.01) ---
+        function generateMemberRows() {
+            const container = document.getElementById('member-rows');
+            let html = '';
+            for (let i = 1; i <= 10; i++) {
+                const isStudent = (i === 1);
+                html += `
+                <tr class="${isStudent ? 'bg-emerald-50' : 'bg-white'}">
+                    <td>${i}</td>
+                    <td><input type="text" class="w-full border-none bg-transparent" ${isStudent ? 'readonly placeholder="นักเรียน"' : ''}></td>
+                    <td>
+                        <select class="w-full border-none bg-transparent outline-none" ${isStudent ? 'disabled' : ''}>
+                            <option value="">-- เลือก --</option>
+                            <option value="นักเรียน" ${isStudent ? 'selected' : ''}>นักเรียน</option>
+                            <option>บิดา</option><option>มารดา</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="w-full border-none bg-transparent outline-none">
+                            <option value="">-- เลือก --</option>
+                            <option>ประถม</option><option>มัธยม</option>
+                        </select>
+                    </td>
+                    <td><input type="number" class="w-full text-center border-none bg-transparent"></td>
+                    <td><input type="number" class="w-full text-right border-none bg-transparent" value="0"></td>
+                    <td><input type="number" class="w-full text-right border-none bg-transparent" value="0"></td>
+                    <td class="font-bold">0</td>
+                </tr>`;
+            }
+            container.innerHTML = html;
+        }
+
+        // --- 3. Supabase Backend Logic ---
+        let supabaseClient = null;
+
+        function initSupabase() {
+            // ดึงค่า URL และ Key ที่ฝังมาแล้ว
+            const url = 'https://bjnvqdbtlcsuyiyvrzyc.supabase.co';
+            const key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJqbnZxZGJ0bGNzdXlpeXZyenljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwMjc1NDgsImV4cCI6MjA5NzYwMzU0OH0.iTy03-c5k2y0qt54Dz0RH0nejkP0wQceWNFUaV0Cwys';
+            
+            if (url && key) {
+                // นำค่าไปแสดงในช่องตั้งค่า เพื่อให้ตรวจสอบได้
+                document.getElementById('sb-url').value = url;
+                document.getElementById('sb-key').value = key;
+                
+                // เชื่อมต่อ Supabase
+                supabaseClient = supabase.createClient(url, key);
+                
+                // เรียกฟังก์ชันดึงข้อมูลทันทีที่เปิดหน้าเว็บ
+                fetchStudents();
+            } else {
+                renderMockTable();
+            }
+        }
+
+        function saveSettings() {
+            const school = document.getElementById('school-name').value;
+            document.getElementById('current-school').innerText = school;
+            
+            Swal.fire('บันทึกสำเร็จ', 'อัปเดตชื่อโรงเรียนเรียบร้อยแล้ว', 'success');
+        }
+
+        async function fetchStudents() {
+            if(!supabaseClient) return;
+            const { data, error } = await supabaseClient.from('students').select('*');
+            
+            const tbody = document.getElementById('student-table-body');
+            
+            if (error) {
+                console.error(error);
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-500">เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล: ${error.message}</td></tr>`;
+                return;
+            }
+            
+            document.getElementById('dash-total').innerText = data.length;
+            
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-400">ยังไม่มีข้อมูลนักเรียนในระบบ</td></tr>`;
+                return;
+            }
+            
+            tbody.innerHTML = data.map(s => `
+                <tr class="hover:bg-gray-50">
+                    <td class="p-4 font-mono">${s.student_id || s.id_card || 'N/A'}</td>
+                    <td class="p-4 font-medium">${s.prefix || ''}${s.first_name} ${s.last_name}</td>
+                    <td class="p-4">${s.class_name || '-'}</td>
+                    <td class="p-4"><span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">${s.status || 'ยังไม่เยี่ยม'}</span></td>
+                    <td class="p-4 text-center"><button class="text-red-500 hover:text-red-700 transition"><i class="fas fa-trash"></i></button></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderMockTable() {
+            const tbody = document.getElementById('student-table-body');
+            tbody.innerHTML = `
+                <tr class="hover:bg-gray-50">
+                    <td class="p-4 font-mono">1-1111-22222-33-4</td>
+                    <td class="p-4 font-medium">ด.ช. ภูผา รักเรียน</td>
+                    <td class="p-4">ป.1</td>
+                    <td class="p-4"><span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full text-xs">เยี่ยมแล้ว</span></td>
+                    <td class="p-4 text-center"><button class="text-red-500"><i class="fas fa-trash"></i></button></td>
+                </tr>
+            `;
+            document.getElementById('dash-total').innerText = "1";
+        }
+
+        function addMockStudent() {
+            Swal.fire({
+                title: 'เพิ่มนักเรียน',
+                html: `
+                    <input id="swal-fname" class="swal2-input w-[80%] mx-auto" placeholder="ชื่อจริง">
+                    <input id="swal-lname" class="swal2-input w-[80%] mx-auto" placeholder="นามสกุล">
+                `,
+                confirmButtonText: 'บันทึก',
+                confirmButtonColor: '#059669',
+                preConfirm: async () => {
+                    if (!supabaseClient) return Swal.showValidationMessage('กรุณาตรวจสอบการเชื่อมต่อ Supabase');
+                    
+                    const fName = document.getElementById('swal-fname').value;
+                    const lName = document.getElementById('swal-lname').value;
+                    
+                    if (!fName || !lName) {
+                        Swal.showValidationMessage('กรุณากรอกชื่อและนามสกุล');
+                    }
+                    
+                    const { error } = await supabaseClient.from('students').insert([
+                        { first_name: fName, last_name: lName, student_id: 'Auto-' + Math.floor(Math.random() * 1000) }
+                    ]);
+                    
+                    if (error) {
+                        Swal.showValidationMessage(`Error: ${error.message}`);
+                    }
+                    return true;
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire('สำเร็จ!', 'เพิ่มนักเรียนเข้าระบบแล้ว', 'success');
+                    fetchStudents();
+                }
+            });
+        }
+
+        // Initialize on load
+        window.onload = () => {
+            generateMemberRows();
+            initSupabase();
+            document.getElementById('current-school').innerText = document.getElementById('school-name').value;
+        };
+    </script>
+</body>
+</html>
