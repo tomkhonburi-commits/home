@@ -491,7 +491,6 @@
         // ==================== SUPABASE SETUP ====================
         const SUPABASE_URL = 'https://nlnfgilqdjqolbgptdzv.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFwd2FveGx6ZWhlcW1haWVjcXd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwMzkyMTIsImV4cCI6MjA5NzYxNTIxMn0.4yv3JfjS2WCPCEf-v4xqKFBEONWT8QxjMzv1uywHJxY';
-        // เปลี่ยนชื่อตัวแปรเป็น supabaseClient เพื่อป้องกันปัญหา Identifier has already been declared
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let sigP, sigT, sigD, students = [], chartStatus, chartProgress, memberCount = 0;
@@ -526,19 +525,27 @@
         // ==================== AUTH & LOGIN ====================
         async function handleLogin(e) {
             e.preventDefault();
-            const u = document.getElementById('log_user').value;
-            const p = document.getElementById('log_pass').value;
+            // ใช้ .trim() ตัดช่องว่างที่อาจเผลอพิมพ์ติดมาด้วย
+            const u = document.getElementById('log_user').value.trim();
+            const p = document.getElementById('log_pass').value.trim();
             
             Swal.fire({title:'ตรวจสอบสิทธิ์...', text:'กำลังเชื่อมต่อ Supabase Database', didOpen:()=>Swal.showLoading()});
             try {
-                const { data, error } = await supabaseClient.from('users').select('*').eq('username', u).eq('password', p).single();
+                // เปลี่ยนจากการใช้ .single() เป็นเช็ก Array เพื่อป้องกัน Error หน้าแดงเวลาหาไม่เจอ
+                const { data, error } = await supabaseClient.from('users').select('*').eq('username', u).eq('password', p);
                 
-                if (error || !data) {
-                    Swal.fire('ผิดพลาด', 'ชื่อผู้ใช้งาน หรือ รหัสผ่านไม่ถูกต้อง', 'error');
-                } else {
+                if (error) {
+                    Swal.fire('ข้อผิดพลาดระบบ', error.message, 'error');
+                    return;
+                }
+
+                if (data && data.length > 0) {
                     Swal.close();
-                    currentUser = { username: data.username, name: data.name, role: data.role, assignedClass: data.assigned_class };
+                    const userData = data[0];
+                    currentUser = { username: userData.username, name: userData.name, role: userData.role, assignedClass: userData.assigned_class };
                     loginSuccess();
+                } else {
+                    Swal.fire('ผิดพลาด', 'ชื่อผู้ใช้งาน หรือ รหัสผ่านไม่ถูกต้อง', 'error');
                 }
             } catch (err) {
                 Swal.fire('ผิดพลาด', err.message, 'error');
