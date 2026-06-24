@@ -985,13 +985,16 @@
                 const file = new File([u8arr], filename, {type: mime});
                 
                 const { data, error } = await supabaseClient.storage.from('nr01-files').upload(filename, file, { upsert: true });
-                if (error) throw error;
+                if (error) {
+                    console.warn("Storage upload failed, falling back to base64:", error.message);
+                    return base64Str; // Fallback: เซฟรูปลงฐานข้อมูลโดยตรง หากอัปโหลดไฟล์ไม่ผ่าน
+                }
                 
                 const { data: publicUrlData } = supabaseClient.storage.from('nr01-files').getPublicUrl(filename);
                 return publicUrlData.publicUrl;
             } catch(e) {
                 console.error("Upload error:", e);
-                return '';
+                return base64Str; // Fallback
             }
         }
 
@@ -1217,7 +1220,7 @@
                         <div class="sig-box">
                             <div style="margin-bottom: 5px;">ลงชื่อผู้ปกครอง</div>
                             <div class="sig-box-inner">
-                                ${d.f_sigP && d.f_sigP.startsWith('http') ? `<img src="${d.f_sigP}" class="sig-img">` : ''}
+                                ${d.f_sigP && d.f_sigP.length > 20 ? `<img src="${d.f_sigP}" class="sig-img">` : ''}
                             </div>
                             <div style="margin-top: 5px;">( <span class="val no-grow" style="display:inline-block; min-width: 130px; border-bottom: 1px dotted #000;">${d.f_pName_sig||d.f_pName||''}</span> )</div>
                         </div>
@@ -1245,7 +1248,7 @@
                         <div class="sig-box" style="margin-top: 15px; margin-left: auto; margin-right: auto;">
                             <div style="margin-bottom: 5px;">ลงชื่อผู้อำนวยการสถานศึกษา</div>
                             <div class="sig-box-inner">
-                                ${d.f_sigD && d.f_sigD.startsWith('http') ? `<img src="${d.f_sigD}" class="sig-img">` : ''}
+                                ${d.f_sigD && d.f_sigD.length > 20 ? `<img src="${d.f_sigD}" class="sig-img">` : ''}
                             </div>
                             <div style="margin-top: 5px;">( <span class="val no-grow" style="display:inline-block; min-width: 150px; border-bottom: 1px dotted #000;">${d.f_dName||''}</span> )</div>
                         </div>
@@ -1258,7 +1261,7 @@
                         <div class="sig-box" style="margin-bottom: 0;">
                             <div style="margin-bottom: 5px;">ลงชื่อ</div>
                             <div class="sig-box-inner" style="min-width: 180px;">
-                                ${d.f_sigT && d.f_sigT.startsWith('http') ? `<img src="${d.f_sigT}" class="sig-img">` : ''}
+                                ${d.f_sigT && d.f_sigT.length > 20 ? `<img src="${d.f_sigT}" class="sig-img">` : ''}
                             </div>
                             <div style="margin-top: 5px;">( <span class="val no-grow" style="display:inline-block; min-width: 160px; border-bottom: 1px dotted #000;">${d.f_tName||''}</span> )</div>
                         </div>
