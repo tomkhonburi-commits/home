@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -489,8 +489,9 @@
 
     <script>
         // ==================== SUPABASE SETUP ====================
-        const SUPABASE_URL = 'https://nlnfgilqdjqolbgptdzv.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFwd2FveGx6ZWhlcW1haWVjcXd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwMzkyMTIsImV4cCI6MjA5NzYxNTIxMn0.4yv3JfjS2WCPCEf-v4xqKFBEONWT8QxjMzv1uywHJxY';
+        // ⚠️ กรุณาตรวจสอบให้แน่ใจว่า URL และ KEY มาจากโปรเจกต์เดียวกันใน Supabase เท่านั้นครับ ⚠️
+        const SUPABASE_URL = 'https://nlnfgilqdjqolbgptdzv.supabase.co'; 
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5sbmZnaWxxZGpxb2xiZ3B0ZHp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNTEyNDQsImV4cCI6MjA5NzgyNzI0NH0.EkX3WlQahyhKMe6JKisSHLYpIUErZR8aSgnneH5zAiU'; 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let sigP, sigT, sigD, students = [], chartStatus, chartProgress, memberCount = 0;
