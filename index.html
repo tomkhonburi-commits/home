@@ -156,7 +156,7 @@
                 <button class="btn btn-outline-danger w-100 rounded-pill py-2 fw-bold shadow-sm" onclick="logout()"><i class="fa-solid fa-right-from-bracket me-2"></i> ออกจากระบบ</button>
                 <div class="mt-4 small text-muted border-top border-light pt-3">
                     <i class="fa-solid fa-user-circle"></i> ล็อกอินโดย: <br><strong class="text-dark" id="side-disp-username">User</strong>
-                    <div class="mt-2"><span class="badge bg-light text-dark border shadow-sm px-3 py-2" id="dash-class-label">ทั้งหมด</span></div>
+                    <div class="mt-2"><span class="badge bg-light text-dark border shadow-sm px-3 py-2" id="side-dash-class-label">ทั้งหมด</span></div>
                 </div>
             </div>
         </div>
@@ -214,7 +214,7 @@
 
         <!-- ==================== 1. DASHBOARD ==================== -->
         <div id="view-dashboard" class="view-section">
-            <h4 class="mb-4 fw-bold" style="color: var(--navy);"><i class="fa-solid fa-chart-line text-primary me-2"></i> ภาพรวมระบบคัดกรอง</h4>
+            <h4 class="mb-4 fw-bold" style="color: var(--navy);"><i class="fa-solid fa-chart-line text-primary me-2"></i> ภาพรวมระบบคัดกรอง <span id="dash-class-label" class="badge bg-primary fs-6 ms-2">ทั้งหมด</span></h4>
             <div class="row g-4 mb-4">
                 <div class="col-6 col-md-3"><div class="glass-card text-center h-100 p-4"><div class="rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width:60px;height:60px;background:rgba(0,0,0,0.05);color:var(--primary); font-size:24px;"><i class="fa-solid fa-users"></i></div><h2 class="fw-bold mb-0 text-dark" id="dash-total">0</h2><div class="small text-muted fw-bold mt-1">นักเรียนทั้งหมด</div></div></div>
                 <div class="col-6 col-md-3"><div class="glass-card text-center h-100 p-4"><div class="rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width:60px;height:60px;background:rgba(16,185,129,0.15);color:var(--success); font-size:24px;"><i class="fa-solid fa-check-circle"></i></div><h2 class="fw-bold mb-0 text-success" id="dash-screened">0</h2><div class="small text-muted fw-bold mt-1">คัดกรองเสร็จแล้ว</div></div></div>
@@ -571,15 +571,15 @@
         }
 
         function loginSuccess() {
-            // โชว์ Navbar แบบแฮมเบอร์เกอร์ และ Footer
+            // โชว์ Navbar และ Footer
             document.getElementById('main-navbar').style.setProperty('display', 'flex', 'important');
             document.getElementById('app-footer').style.display = 'block';
             
-            // อัปเดตข้อมูลผู้ใช้ใน Navbar และ Slide Menu
-            document.getElementById('disp-username').innerText = currentUser.name;
-            document.getElementById('side-disp-username').innerText = currentUser.name;
-            document.getElementById('dash-class-label').innerText = currentUser.role === 'admin' ? 'รวมทุกห้อง' : `ห้อง ${currentUser.assignedClass}`;
-            document.getElementById('side-dash-class-label').innerText = currentUser.role === 'admin' ? 'ผู้ดูแลระบบ (เห็นทุกห้อง)' : `ห้อง ${currentUser.assignedClass}`;
+            // อัปเดตข้อมูลผู้ใช้ (ใส่เงื่อนไขตรวจสอบเพื่อป้องกัน null error)
+            if (document.getElementById('disp-username')) document.getElementById('disp-username').innerText = currentUser.name;
+            if (document.getElementById('side-disp-username')) document.getElementById('side-disp-username').innerText = currentUser.name;
+            if (document.getElementById('dash-class-label')) document.getElementById('dash-class-label').innerText = currentUser.role === 'admin' ? 'รวมทุกห้อง' : `ห้อง ${currentUser.assignedClass}`;
+            if (document.getElementById('side-dash-class-label')) document.getElementById('side-dash-class-label').innerText = currentUser.role === 'admin' ? 'ผู้ดูแลระบบ (เห็นทุกห้อง)' : `ห้อง ${currentUser.assignedClass}`;
             
             if(currentUser.role === 'teacher') {
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
@@ -599,7 +599,6 @@
             document.getElementById('log_user').value = '';
             document.getElementById('log_pass').value = '';
             
-            // ปิด Slide Menu เผื่อเปิดค้างไว้
             try {
                 const slideMenuEl = document.getElementById('slideMenu');
                 if (slideMenuEl) {
@@ -685,7 +684,6 @@
         }
 
         function switchView(id) {
-            // ปิด Slide Menu ถ้าผู้ใช้กดเปลี่ยนหน้าต่าง
             try {
                 const slideMenuEl = document.getElementById('slideMenu');
                 if (slideMenuEl) {
