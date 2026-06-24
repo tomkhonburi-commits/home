@@ -25,13 +25,17 @@
         
         :root { --glass: rgba(255, 255, 255, 0.85); --dark-text: #1E293B; --muted-text: #64748B; }
         body { font-family: 'Prompt', sans-serif; background: var(--bg); background-attachment: fixed; min-height: 100vh; color: var(--dark-text); display: flex; flex-direction: column; }
-        h1, h2, h3, h4, h5, h6, .navbar-brand, .modal-title { font-family: 'Kanit', sans-serif; }
+        h1, h2, h3, h4, h5, h6, .navbar-brand, .modal-title, .offcanvas-title { font-family: 'Kanit', sans-serif; }
         
         /* ==================== UI COMPONENTS ==================== */
         .glass-card { background: var(--glass); backdrop-filter: blur(20px); border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); padding: 30px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.6); transition: all 0.3s ease; }
-        .glass-navbar { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: sticky; top: 15px; z-index: 1050; }
-        .nav-link { cursor: pointer; color: var(--muted-text); font-weight: 500; padding: 10px 20px !important; border-radius: 12px; transition: all 0.3s ease; margin: 0 5px; }
+        .glass-navbar { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 10px 30px rgba(0,0,0,0.05); position: sticky; top: 15px; z-index: 1040; }
+        
+        /* Slide Menu (Offcanvas) Styles */
+        .glass-sidebar { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 10px 0 30px rgba(0,0,0,0.05); }
+        .nav-link { cursor: pointer; color: var(--muted-text); font-weight: 500; padding: 12px 20px !important; border-radius: 12px; transition: all 0.3s ease; margin: 4px 15px; display: flex; align-items: center; }
         .nav-link:hover, .nav-link.active { color: var(--primary); background: rgba(var(--primary), 0.1); }
+        .w-20px { width: 25px; text-align: center; }
         
         .btn-p { background: var(--primary); color: #fff; border: none; border-radius: 12px; padding: 10px 24px; font-weight: 500; transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .btn-p:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); color: #fff; filter: brightness(1.1); }
@@ -99,12 +103,12 @@
         @media print {
             @page { size: A4; margin: 15mm; }
             body { background: #fff !important; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            .no-print, nav, .swal2-container, footer { display: none !important; }
+            .no-print, nav, .swal2-container, footer, .offcanvas-backdrop { display: none !important; }
             .view-section { display: none !important; }
             #view-print-a4.active { display: block !important; }
             .a4-preview-wrapper { padding: 0; background: #fff; overflow: visible; }
             .a4-document { margin: 0; box-shadow: none; border: none; padding: 0; width: auto; height: auto; min-height: auto;}
-            .o-header-right { display: none; } /* ซ่อนหัวมุมขวาบนตอน print เพื่อไม่ให้ซ้อนเนื้อหา */
+            .o-header-right { display: none; } 
             .container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
             img { display: inline-block !important; visibility: visible !important; }
             div, p, table, tr, .sig-section, .photo-grid { page-break-inside: avoid; }
@@ -113,34 +117,50 @@
 </head>
 <body class="theme-purple">
 
-    <!-- NAVBAR -->
-    <nav id="main-navbar" class="navbar navbar-expand-lg glass-navbar mx-3 mt-3 py-2 no-print rounded-pill" style="display: none;">
-        <div class="container-fluid px-4">
-            <span class="navbar-brand text-primary fw-bold fs-4"><i class="fa-solid fa-graduation-cap me-2"></i><span id="nav-system-name">นร.01 Premium</span></span>
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item"><a class="nav-link active" id="nav-dashboard" onclick="switchView('dashboard')"><i class="fa-solid fa-chart-pie me-1"></i> แดชบอร์ด</a></li>
-                    <li class="nav-item"><a class="nav-link" id="nav-students" onclick="switchView('students')"><i class="fa-solid fa-users me-1"></i> ฐานข้อมูลนร.</a></li>
-                    <li class="nav-item"><a class="nav-link" id="nav-screening-list" onclick="switchView('screening-list')"><i class="fa-solid fa-house-chimney-user me-1"></i> คัดกรอง/เยี่ยมบ้าน</a></li>
-                    <li class="nav-item"><a class="nav-link" id="nav-reports" onclick="switchView('reports')"><i class="fa-solid fa-file-pdf me-1"></i> รายงาน</a></li>
-                    
-                    <!-- Admin Only Menus -->
-                    <li class="nav-item admin-only"><a class="nav-link" id="nav-users" onclick="switchView('users')"><i class="fa-solid fa-chalkboard-user me-1"></i> จัดการครู</a></li>
-                    <li class="nav-item admin-only"><a class="nav-link" id="nav-settings" onclick="switchView('settings')"><i class="fa-solid fa-cog me-1"></i> ตั้งค่า</a></li>
-                </ul>
-                <div class="d-flex align-items-center gap-3">
-                    <div class="text-end lh-1 d-none d-lg-block">
-                        <small class="text-muted d-block" style="font-size: 0.7rem;">ผู้ใช้งานระบบ</small>
-                        <strong class="text-primary" id="disp-username">User</strong>
-                    </div>
-                    <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ</button>
+    <!-- NAVBAR (TOP BAR WITH HAMBURGER) -->
+    <nav id="main-navbar" class="navbar glass-navbar mx-3 mt-3 py-2 no-print rounded-pill" style="display: none !important;">
+        <div class="container-fluid px-3 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-light rounded-circle shadow-sm border-0 text-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#slideMenu" style="width: 45px; height: 45px;">
+                    <i class="fa-solid fa-bars fs-5"></i>
+                </button>
+                <span class="navbar-brand text-primary fw-bold fs-4 mb-0"><i class="fa-solid fa-graduation-cap me-2"></i><span id="nav-system-name">นร.01 Premium</span></span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-end lh-1 d-none d-sm-block">
+                    <small class="text-muted d-block" style="font-size: 0.7rem;">ผู้ใช้งานระบบ</small>
+                    <strong class="text-primary" id="disp-username">User</strong>
                 </div>
             </div>
         </div>
     </nav>
+
+    <!-- SLIDE MENU (OFFCANVAS SIDEBAR) -->
+    <div class="offcanvas offcanvas-start glass-sidebar border-0 no-print" tabindex="-1" id="slideMenu" style="width: 320px;">
+        <div class="offcanvas-header border-bottom border-light px-4 py-4">
+            <h5 class="offcanvas-title fw-bold text-primary"><i class="fa-solid fa-layer-group me-2"></i> เมนูระบบ</h5>
+            <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body px-0 py-3 d-flex flex-column">
+            <ul class="nav flex-column gap-1 mb-auto w-100">
+                <li class="nav-item"><a class="nav-link active" id="nav-dashboard" onclick="switchView('dashboard')"><i class="fa-solid fa-chart-pie me-2 w-20px text-center"></i> แดชบอร์ด</a></li>
+                <li class="nav-item"><a class="nav-link" id="nav-students" onclick="switchView('students')"><i class="fa-solid fa-users me-2 w-20px text-center"></i> ฐานข้อมูลนร.</a></li>
+                <li class="nav-item"><a class="nav-link" id="nav-screening-list" onclick="switchView('screening-list')"><i class="fa-solid fa-house-chimney-user me-2 w-20px text-center"></i> คัดกรอง/เยี่ยมบ้าน</a></li>
+                <li class="nav-item"><a class="nav-link" id="nav-reports" onclick="switchView('reports')"><i class="fa-solid fa-file-pdf me-2 w-20px text-center"></i> ศูนย์รายงาน PDF</a></li>
+                
+                <li class="nav-item admin-only mt-3 pt-3 border-top border-light"><a class="nav-link" id="nav-users" onclick="switchView('users')"><i class="fa-solid fa-chalkboard-user me-2 w-20px text-center"></i> จัดการครู/สิทธิ์</a></li>
+                <li class="nav-item admin-only"><a class="nav-link" onclick="setupDatabase()"><i class="fa-solid fa-database me-2 w-20px text-center"></i> ตรวจสอบฐานข้อมูล DB</a></li>
+                <li class="nav-item admin-only"><a class="nav-link" id="nav-settings" onclick="switchView('settings')"><i class="fa-solid fa-cog me-2 w-20px text-center"></i> ตั้งค่าระบบ</a></li>
+            </ul>
+            <div class="px-4 mt-4 mb-3 pt-3 text-center">
+                <button class="btn btn-outline-danger w-100 rounded-pill py-2 fw-bold shadow-sm" onclick="logout()"><i class="fa-solid fa-right-from-bracket me-2"></i> ออกจากระบบ</button>
+                <div class="mt-4 small text-muted border-top border-light pt-3">
+                    <i class="fa-solid fa-user-circle"></i> ล็อกอินโดย: <br><strong class="text-dark" id="side-disp-username">User</strong>
+                    <div class="mt-2"><span class="badge bg-light text-dark border shadow-sm px-3 py-2" id="dash-class-label">ทั้งหมด</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="container mt-4 mb-5 flex-grow-1">
 
@@ -194,7 +214,7 @@
 
         <!-- ==================== 1. DASHBOARD ==================== -->
         <div id="view-dashboard" class="view-section">
-            <h4 class="mb-4 fw-bold" style="color: var(--navy);"><i class="fa-solid fa-chart-line text-primary me-2"></i> ภาพรวมระบบคัดกรอง <span id="dash-class-label" class="badge bg-primary fs-6 ms-2">ทั้งหมด</span></h4>
+            <h4 class="mb-4 fw-bold" style="color: var(--navy);"><i class="fa-solid fa-chart-line text-primary me-2"></i> ภาพรวมระบบคัดกรอง</h4>
             <div class="row g-4 mb-4">
                 <div class="col-6 col-md-3"><div class="glass-card text-center h-100 p-4"><div class="rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width:60px;height:60px;background:rgba(0,0,0,0.05);color:var(--primary); font-size:24px;"><i class="fa-solid fa-users"></i></div><h2 class="fw-bold mb-0 text-dark" id="dash-total">0</h2><div class="small text-muted fw-bold mt-1">นักเรียนทั้งหมด</div></div></div>
                 <div class="col-6 col-md-3"><div class="glass-card text-center h-100 p-4"><div class="rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width:60px;height:60px;background:rgba(16,185,129,0.15);color:var(--success); font-size:24px;"><i class="fa-solid fa-check-circle"></i></div><h2 class="fw-bold mb-0 text-success" id="dash-screened">0</h2><div class="small text-muted fw-bold mt-1">คัดกรองเสร็จแล้ว</div></div></div>
@@ -489,7 +509,6 @@
 
     <script>
         // ==================== SUPABASE SETUP ====================
-        // ⚠️ กรุณาตรวจสอบให้แน่ใจว่า URL และ KEY มาจากโปรเจกต์เดียวกันใน Supabase เท่านั้นครับ ⚠️
         const SUPABASE_URL = 'https://nlnfgilqdjqolbgptdzv.supabase.co'; 
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5sbmZnaWxxZGpxb2xiZ3B0ZHp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyNTEyNDQsImV4cCI6MjA5NzgyNzI0NH0.EkX3WlQahyhKMe6JKisSHLYpIUErZR8aSgnneH5zAiU'; 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -526,13 +545,11 @@
         // ==================== AUTH & LOGIN ====================
         async function handleLogin(e) {
             e.preventDefault();
-            // ใช้ .trim() ตัดช่องว่างที่อาจเผลอพิมพ์ติดมาด้วย
             const u = document.getElementById('log_user').value.trim();
             const p = document.getElementById('log_pass').value.trim();
             
             Swal.fire({title:'ตรวจสอบสิทธิ์...', text:'กำลังเชื่อมต่อ Supabase Database', didOpen:()=>Swal.showLoading()});
             try {
-                // เปลี่ยนจากการใช้ .single() เป็นเช็ก Array เพื่อป้องกัน Error หน้าแดงเวลาหาไม่เจอ
                 const { data, error } = await supabaseClient.from('users').select('*').eq('username', u).eq('password', p);
                 
                 if (error) {
@@ -554,10 +571,15 @@
         }
 
         function loginSuccess() {
-            document.getElementById('main-navbar').style.display = 'flex';
+            // โชว์ Navbar แบบแฮมเบอร์เกอร์ และ Footer
+            document.getElementById('main-navbar').style.setProperty('display', 'flex', 'important');
             document.getElementById('app-footer').style.display = 'block';
+            
+            // อัปเดตข้อมูลผู้ใช้ใน Navbar และ Slide Menu
             document.getElementById('disp-username').innerText = currentUser.name;
+            document.getElementById('side-disp-username').innerText = currentUser.name;
             document.getElementById('dash-class-label').innerText = currentUser.role === 'admin' ? 'รวมทุกห้อง' : `ห้อง ${currentUser.assignedClass}`;
+            document.getElementById('side-dash-class-label').innerText = currentUser.role === 'admin' ? 'ผู้ดูแลระบบ (เห็นทุกห้อง)' : `ห้อง ${currentUser.assignedClass}`;
             
             if(currentUser.role === 'teacher') {
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
@@ -572,10 +594,20 @@
 
         function logout() {
             currentUser = null;
-            document.getElementById('main-navbar').style.display = 'none';
+            document.getElementById('main-navbar').style.setProperty('display', 'none', 'important');
             document.getElementById('app-footer').style.display = 'none';
             document.getElementById('log_user').value = '';
             document.getElementById('log_pass').value = '';
+            
+            // ปิด Slide Menu เผื่อเปิดค้างไว้
+            try {
+                const slideMenuEl = document.getElementById('slideMenu');
+                if (slideMenuEl) {
+                    const bsOffcanvas = bootstrap.Offcanvas.getInstance(slideMenuEl);
+                    if (bsOffcanvas) bsOffcanvas.hide();
+                }
+            } catch(e) {}
+            
             switchView('login');
         }
 
@@ -653,6 +685,15 @@
         }
 
         function switchView(id) {
+            // ปิด Slide Menu ถ้าผู้ใช้กดเปลี่ยนหน้าต่าง
+            try {
+                const slideMenuEl = document.getElementById('slideMenu');
+                if (slideMenuEl) {
+                    const bsOffcanvas = bootstrap.Offcanvas.getInstance(slideMenuEl);
+                    if (bsOffcanvas) bsOffcanvas.hide();
+                }
+            } catch(e) {}
+
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             const targetView = document.getElementById('view-' + id);
             if(targetView) targetView.classList.add('active');
@@ -663,14 +704,6 @@
             
             if(id === 'form-nr01') setTimeout(resizeCanvases, 300);
             window.scrollTo(0,0);
-            
-            try {
-                const navbarCollapse = document.getElementById('navbarNav');
-                const navbarToggler = document.querySelector('.navbar-toggler');
-                if (navbarToggler && window.getComputedStyle(navbarToggler).display !== 'none' && navbarCollapse.classList.contains('show')) {
-                    navbarToggler.click(); 
-                }
-            } catch(e) {}
         }
 
         async function saveSettingsValues() {
@@ -698,6 +731,10 @@
             } catch(err) {
                 Swal.fire('ผิดพลาด', err.message, 'error');
             }
+        }
+
+        function setupDatabase() {
+            if(typeof google !== 'undefined') { Swal.fire({title:'กำลัง Setup DB...', didOpen:()=>Swal.showLoading()}); google.script.run.withSuccessHandler(res=>Swal.fire('สำเร็จ',res,'success')).initDatabaseSheets(); }
         }
 
         // ==================== STUDENTS DATA ====================
