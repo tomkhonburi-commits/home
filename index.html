@@ -5,17 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบจัดการแข่งขันกีฬาสีโรงเรียน</title>
     
-    <!-- เรียกใช้งาน Tailwind CSS -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- เรียกใช้งาน FontAwesome Icons -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- เรียกใช้งาน React -->
+    <!-- React & ReactDOM -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
-    <!-- เรียกใช้งาน Babel เพื่อแปลโค้ด React -->
+    <!-- Babel (แปลงโค้ด JSX เป็น JS ทันทีในเบราว์เซอร์) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
@@ -28,6 +28,11 @@
           10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
           20%, 40%, 60%, 80% { transform: translateX(5px); }
         }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+          -webkit-appearance: none; 
+          margin: 0; 
+        }
     </style>
 </head>
 <body>
@@ -36,7 +41,7 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
 
-        // --- Icon Components (แปลงจาก Lucide เป็น FontAwesome เพื่อให้ใช้บน HTML ง่ายๆ) ---
+        // --- Icon Components (FontAwesome wrapper) ---
         const Trophy = ({size=16, className=""}) => <i className={`fa-solid fa-trophy ${className}`} style={{fontSize: size}}></i>;
         const Calendar = ({size=16, className=""}) => <i className={`fa-regular fa-calendar ${className}`} style={{fontSize: size}}></i>;
         const Search = ({size=16, className=""}) => <i className={`fa-solid fa-magnifying-glass ${className}`} style={{fontSize: size}}></i>;
@@ -74,540 +79,545 @@
         const ImageIcon = ({size=16, className=""}) => <i className={`fa-solid fa-image ${className}`} style={{fontSize: size}}></i>;
         const Save = ({size=16, className=""}) => <i className={`fa-solid fa-floppy-disk ${className}`} style={{fontSize: size}}></i>;
 
-        // --- ข้อมูลตั้งต้น ---
+        // --- Initial Mock Data ---
         const initialTeamColors = [
-          { id: 'pink', name: 'สีชมพู', bg: 'bg-pink-500', text: 'text-pink-700', border: 'border-pink-500', score: 0, gold: 0, silver: 0, bronze: 0, rank: 1 },
-          { id: 'blue', name: 'สีฟ้า', bg: 'bg-blue-500', text: 'text-blue-700', border: 'border-blue-500', score: 0, gold: 0, silver: 0, bronze: 0, rank: 2 },
-          { id: 'green', name: 'สีเขียว', bg: 'bg-green-500', text: 'text-green-700', border: 'border-green-500', score: 0, gold: 0, silver: 0, bronze: 0, rank: 3 },
-          { id: 'yellow', name: 'สีเหลือง', bg: 'bg-yellow-400', text: 'text-yellow-700', border: 'border-yellow-400', score: 0, gold: 0, silver: 0, bronze: 0, rank: 4 }, 
+            { id: 'pink', name: 'สีชมพู', bg: 'bg-pink-500', text: 'text-pink-700', border: 'border-pink-500' },
+            { id: 'blue', name: 'สีฟ้า', bg: 'bg-blue-500', text: 'text-blue-700', border: 'border-blue-500' },
+            { id: 'green', name: 'สีเขียว', bg: 'bg-green-500', text: 'text-green-700', border: 'border-green-500' },
+            { id: 'yellow', name: 'สีเหลือง', bg: 'bg-yellow-400', text: 'text-yellow-700', border: 'border-yellow-400' }, 
         ];
 
         const initialSports = ['ปิงปอง', 'บอลพลาสติก', 'เปตอง', 'ฟุตซอล 5 คน', 'แชร์บอล', 'ฟุตบอล 7 คน', 'วอลเลย์บอล', 'เซปักตะกร้อ'];
         const initialAges = ['9ปี (ผสม)', '10ปีชาย', '10ปีหญิง', '12ปีชาย', '12ปีหญิง', '15ปีชาย', '15ปีหญิง'];
 
-        const initialSettings = {
-          siteName: 'ระบบจัดการแข่งขันกีฬาสี',
-          schoolYear: 'ประจำปีการศึกษา 2569',
-          logo: null,
-          footerTitle: 'กีฬาสีภายใน 2569',
-          footerSlogan: 'มุ่งมั่นสร้างความสามัคคี รู้แพ้ รู้ชนะ รู้อภัย และส่งเสริมสุขภาพด้วยกีฬาสีสัมพันธ์ประจำปี',
-          footerEmail: 'sport@school.ac.th',
-          footerPhone: '02-xxx-xxxx',
-          footerLocation: 'สนามกีฬาโรงเรียนหลัก และอาคารอเนกประสงค์',
-          footerCopyright: '© 2569 ระบบจัดการแข่งขันกีฬาสีโรงเรียน. สงวนลิขสิทธิ์'
-        };
-
-        // --- ข้อมูลตารางการแข่งขันทั้งหมด 101 แมตช์ จากรูปภาพ ---
         const mockSchedules = [
-          // ปิงปอง
-          { id: 1, sport: 'ปิงปอง', date: '1/7/69', time: '13.00-13.30', round: 'แรก', age: '15ปีชาย', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 2, sport: 'ปิงปอง', date: '1/7/69', time: '13.30-14.00', round: 'แรก', age: '15ปีหญิง', versus: 'ชมพู vs ฟ้า', status: 'pending', winner: null },
-          { id: 3, sport: 'ปิงปอง', date: '1/7/69', time: '14.00-14.30', round: 'แรก', age: '15ปีชาย', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 4, sport: 'ปิงปอง', date: '1/7/69', time: '14.30-15.00', round: 'แรก', age: '15ปีหญิง', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 5, sport: 'ปิงปอง', date: '2/7/69', time: '13.00-13.30', round: 'แรก', age: '15ปีชาย', versus: 'ชมพู vs ฟ้า', status: 'pending', winner: null },
-          { id: 6, sport: 'ปิงปอง', date: '2/7/69', time: '13.30-14.00', round: 'แรก', age: '15ปีหญิง', versus: 'เขียว vs ชมพู', status: 'pending', winner: null },
-          { id: 7, sport: 'ปิงปอง', date: '2/7/69', time: '14.00-14.30', round: 'ชิงชนะเลิศ', age: '15ปีชาย', versus: 'ชิง 1 vs 2', status: 'pending', winner: null },
-          { id: 8, sport: 'ปิงปอง', date: '2/7/69', time: '14.30-15.00', round: 'ชิงชนะเลิศ', age: '15ปีหญิง', versus: 'ชิง 1 vs 2', status: 'pending', winner: null },
-
-          // บอลพลาสติก
-          { id: 9, sport: 'บอลพลาสติก', date: '7/7/69', time: '10.30-11.00', round: 'แรก', age: '9ปี', versus: 'ชมพู vs ฟ้า', status: 'pending', winner: null },
-          { id: 10, sport: 'บอลพลาสติก', date: '7/7/69', time: '11.00-11.30', round: 'แรก', age: '9ปี', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 11, sport: 'บอลพลาสติก', date: '7/7/69', time: '13.00-13.30', round: 'แรก', age: '9ปี', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 12, sport: 'บอลพลาสติก', date: '7/7/69', time: '13.30-14.00', round: 'ชิงชนะเลิศ', age: '9ปี', versus: 'ชิง 1 vs ชิง 2', status: 'pending', winner: null },
-
-          // เปตอง
-          { id: 13, sport: 'เปตอง', date: '1/7/69', time: '11.00-11.30', round: 'แรก', age: '12ปีหญิง', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 14, sport: 'เปตอง', date: '1/7/69', time: '11.30-12.00', round: 'แรก', age: '15ปีหญิง', versus: 'ชมพู vs ฟ้า', status: 'pending', winner: null },
-          { id: 15, sport: 'เปตอง', date: '1/7/69', time: '13.00-13.30', round: 'แรก', age: '15ปีหญิง', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 16, sport: 'เปตอง', date: '1/7/69', time: '13.30-14.00', round: 'แรก', age: '12ปีชาย', versus: 'เขียว vs ชมพู', status: 'pending', winner: null },
-          { id: 17, sport: 'เปตอง', date: '1/7/69', time: '14.00-14.30', round: 'แรก', age: '15ปีชาย', versus: 'เขียว vs ฟ้า', status: 'pending', winner: null },
-          { id: 18, sport: 'เปตอง', date: '1/7/69', time: '14.30-15.00', round: 'แรก', age: '12ปีหญิง', versus: 'ชมพู vs ฟ้า', status: 'pending', winner: null },
-          { id: 19, sport: 'เปตอง', date: '1/7/69', time: '15.00-15.30', round: 'แรก', age: '12ปีหญิง', versus: 'ฟ้า vs ชมพู', status: 'pending', winner: null },
-          { id: 20, sport: 'เปตอง', date: '2/7/69', time: '09.00-09.30', round: 'แรก', age: '12ปีหญิง', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 21, sport: 'เปตอง', date: '2/7/69', time: '09.30-10.00', round: 'แรก', age: '15ปีชาย', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 22, sport: 'เปตอง', date: '2/7/69', time: '10.00-10.30', round: 'แรก', age: '12ปีชาย', versus: 'เขียว vs ชมพู', status: 'pending', winner: null },
-          { id: 23, sport: 'เปตอง', date: '2/7/69', time: '10.30-11.00', round: 'แรก', age: '15ปีหญิง', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 24, sport: 'เปตอง', date: '2/7/69', time: '11.00-11.30', round: 'แรก', age: '12ปีชาย', versus: 'ฟ้า vs ชมพู', status: 'pending', winner: null },
-          { id: 25, sport: 'เปตอง', date: '3/7/69', time: '09.00-09.30', round: 'แรก', age: '10ปีชาย', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 26, sport: 'เปตอง', date: '3/7/69', time: '09.30-10.00', round: 'แรก', age: '10ปีชาย', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 27, sport: 'เปตอง', date: '3/7/69', time: '10.00-10.30', round: 'แรก', age: '10ปีชาย', versus: 'ฟ้า vs ชมพู', status: 'pending', winner: null },
-          { id: 28, sport: 'เปตอง', date: '3/7/69', time: '10.30-11.00', round: 'แรก', age: '10ปีหญิง', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 29, sport: 'เปตอง', date: '3/7/69', time: '11.00-11.30', round: 'แรก', age: '10ปีหญิง', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 30, sport: 'เปตอง', date: '3/7/69', time: '11.30-12.00', round: 'แรก', age: '10ปีหญิง', versus: 'ฟ้า vs ชมพู', status: 'pending', winner: null },
-
-          // ฟุตซอล 5 คน
-          { id: 31, sport: 'ฟุตซอล 5 คน', date: '1/7/69', time: '13.00 - 13.30', round: 'แรก', age: '12ปีชาย', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 32, sport: 'ฟุตซอล 5 คน', date: '1/7/69', time: '13.30 - 14.00', round: 'แรก', age: '15ปีชาย', versus: 'ชมพู vs ฟ้า', status: 'pending', winner: null },
-          { id: 33, sport: 'ฟุตซอล 5 คน', date: '1/7/69', time: '14.00 - 14.30', round: 'แรก', age: '12ปีชาย', versus: 'ฟ้า vs ชมพู', status: 'pending', winner: null },
-          { id: 34, sport: 'ฟุตซอล 5 คน', date: '2/7/69', time: '09.00 - 09.30', round: 'แรก', age: '15ปีชาย', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 35, sport: 'ฟุตซอล 5 คน', date: '2/7/69', time: '09.30 - 10.00', round: 'แรก', age: '12ปีชาย', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 36, sport: 'ฟุตซอล 5 คน', date: '2/7/69', time: '10.00-10:30', round: 'แรก', age: '15ปีชาย', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 37, sport: 'ฟุตซอล 5 คน', date: '6/7/69', time: '14:00-14:30', round: 'ชิงชนะเลิศ', age: '12ปีชาย', versus: 'ชิง 1 vs 2', status: 'pending', winner: null },
-          { id: 38, sport: 'ฟุตซอล 5 คน', date: '6/7/69', time: '14:30-15:00', round: 'ชิงชนะเลิศ', age: '15ปีชาย', versus: 'ชิง 1 vs 2', status: 'pending', winner: null },
-
-          // แชร์บอล
-          { id: 39, sport: 'แชร์บอล', date: '6/7/69', time: '10.00 - 10.30', round: 'แรก', age: '10ปีชาย', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 40, sport: 'แชร์บอล', date: '6/7/69', time: '10.30-11.00', round: 'แรก', age: '12ปีชาย', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 41, sport: 'แชร์บอล', date: '6/7/69', time: '11.00-11.30', round: 'แรก', age: '10ปีหญิง', versus: 'ฟ้า vs ชมพู', status: 'pending', winner: null },
-          { id: 42, sport: 'แชร์บอล', date: '6/7/69', time: '11.30-12.00', round: 'แรก', age: '12ปีหญิง', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 43, sport: 'แชร์บอล', date: '6/7/69', time: '13.00-13.30', round: 'แรก', age: '10ปีชาย', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 44, sport: 'แชร์บอล', date: '6/7/69', time: '13.30-14.00', round: 'แรก', age: '12ปีหญิง', versus: 'ชมพู vs ฟ้า', status: 'pending', winner: null },
-          { id: 45, sport: 'แชร์บอล', date: '7/7/69', time: '09.30-10.00', round: 'แรก', age: '10ปีหญิง', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 46, sport: 'แชร์บอล', date: '7/7/69', time: '10.00-10.30', round: 'แรก', age: '12ปีชาย', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 47, sport: 'แชร์บอล', date: '7/7/69', time: '10.30-11.00', round: 'แรก', age: '12ปีหญิง', versus: 'ฟ้า vs ชมพู', status: 'pending', winner: null },
-          { id: 48, sport: 'แชร์บอล', date: '7/7/69', time: '11.00-11.30', round: 'แรก', age: '10ปีหญิง', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 49, sport: 'แชร์บอล', date: '7/7/69', time: '14.00-14.30', round: 'แรก', age: '12ปีชาย', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-
-          // ฟุตบอล 7 คน
-          { id: 50, sport: 'ฟุตบอล 7 คน', date: '3/7/69', time: '09:00-09:30', round: 'แรก', age: '10 ปีชาย', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 51, sport: 'ฟุตบอล 7 คน', date: '3/7/69', time: '09:30-10:00', round: 'แรก', age: '12 ปีหญิง', versus: 'ฟ้า vs ชมพู', status: 'pending', winner: null },
-          { id: 52, sport: 'ฟุตบอล 7 คน', date: '3/7/69', time: '10:00-10:30', round: 'แรก', age: '10 ปีชาย', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 53, sport: 'ฟุตบอล 7 คน', date: '3/7/69', time: '10:30-11:00', round: 'แรก', age: '15 ปีชาย', versus: 'เขียว vs ชมพู', status: 'pending', winner: null },
-          { id: 54, sport: 'ฟุตบอล 7 คน', date: '3/7/69', time: '11:00-11:30', round: 'แรก', age: '12 ปีชาย', versus: 'ชมพู vs ฟ้า', status: 'pending', winner: null },
-          { id: 55, sport: 'ฟุตบอล 7 คน', date: '3/7/69', time: '11:30-12:00', round: 'แรก', age: '15 ปีหญิง', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 56, sport: 'ฟุตบอล 7 คน', date: '6/7/69', time: '09:00-09:30', round: 'แรก', age: '10 ปีชาย', versus: 'ฟ้า vs ชมพู', status: 'pending', winner: null },
-          { id: 57, sport: 'ฟุตบอล 7 คน', date: '6/7/69', time: '09:30-10:00', round: 'แรก', age: '15 ปีชาย', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 58, sport: 'ฟุตบอล 7 คน', date: '6/7/69', time: '10:00-10:30', round: 'แรก', age: '12 ปีหญิง', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 59, sport: 'ฟุตบอล 7 คน', date: '6/7/69', time: '10:30-11:00', round: 'แรก', age: '15 ปีหญิง', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 60, sport: 'ฟุตบอล 7 คน', date: '6/7/69', time: '11:00-11:30', round: 'แรก', age: '12 ปีชาย', versus: 'เขียว vs ชมพู', status: 'pending', winner: null },
-          { id: 61, sport: 'ฟุตบอล 7 คน', date: '6/7/69', time: '13:00-13:30', round: 'แรก', age: '12 ปีหญิง', versus: 'เขียว vs ฟ้า', status: 'pending', winner: null },
-          { id: 62, sport: 'ฟุตบอล 7 คน', date: '6/7/69', time: '13:30-14:00', round: 'แรก', age: '15 ปีชาย', versus: 'ชมพู vs ฟ้า', status: 'pending', winner: null },
-          { id: 63, sport: 'ฟุตบอล 7 คน', date: '6/7/69', time: '14:00-14:30', round: 'แรก', age: '12 ปีชาย', versus: 'ฟ้า vs ชมพู', status: 'pending', winner: null },
-          { id: 64, sport: 'ฟุตบอล 7 คน', date: '6/7/69', time: '14:30-15:00', round: 'แรก', age: '15 ปีหญิง', versus: 'ฟ้า vs ชมพู', status: 'pending', winner: null },
-          { id: 65, sport: 'ฟุตบอล 7 คน', date: '9/7/69', time: '09:00-09:30', round: 'แรก', age: '10 ปีชาย', versus: 'เขียว vs ฟ้า', status: 'pending', winner: null },
-          { id: 66, sport: 'ฟุตบอล 7 คน', date: '9/7/69', time: '09:30-10:00', round: 'แรก', age: '12 ปีหญิง', versus: 'ชมพู vs ฟ้า', status: 'pending', winner: null },
-          { id: 67, sport: 'ฟุตบอล 7 คน', date: '9/7/69', time: '10:00-10:30', round: 'แรก', age: '12 ปีชาย', versus: 'ฟ้า vs ชมพู', status: 'pending', winner: null },
-          { id: 68, sport: 'ฟุตบอล 7 คน', date: '10/7/69', time: '13:00-13:30', round: 'ชิงชนะเลิศ', age: '15 ปีหญิง', versus: 'ชิง 1 vs 2', status: 'pending', winner: null },
-          { id: 69, sport: 'ฟุตบอล 7 คน', date: '10/7/69', time: '13:30-14:00', round: 'ชิงชนะเลิศ', age: '15 ปีชาย', versus: 'ชิง 1 vs 2', status: 'pending', winner: null },
-
-          // วอลเลย์บอล
-          { id: 70, sport: 'วอลเลย์บอล', date: '1/7/69', time: '13.00-14.00', round: 'แรก', age: '12ปีชาย', versus: 'เขียว vs ชมพู', status: 'pending', winner: null },
-          { id: 71, sport: 'วอลเลย์บอล', date: '1/7/69', time: '14.00-15.00', round: 'แรก', age: '15ปีหญิง', versus: 'ชมพู vs ฟ้า', status: 'pending', winner: null },
-          { id: 72, sport: 'วอลเลย์บอล', date: '1/7/69', time: '15.00 - 16.00', round: 'แรก', age: '15ปีชาย', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 73, sport: 'วอลเลย์บอล', date: '2/7/69', time: '09.00-10.00', round: 'แรก', age: '15ปีหญิง', versus: 'เขียว vs ชมพู', status: 'pending', winner: null },
-          { id: 74, sport: 'วอลเลย์บอล', date: '2/7/69', time: '10.00-11.00', round: 'แรก', age: '12ปีชาย', versus: 'ชมพู vs ฟ้า', status: 'pending', winner: null },
-          { id: 75, sport: 'วอลเลย์บอล', date: '2/7/69', time: '11.00-12.00', round: 'แรก', age: '12ปีหญิง', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 76, sport: 'วอลเลย์บอล', date: '2/7/69', time: '13.00-14.00', round: 'แรก', age: '15ปีชาย', versus: 'ชมพู vs ฟ้า', status: 'pending', winner: null },
-          { id: 77, sport: 'วอลเลย์บอล', date: '2/7/69', time: '14.00-15.00', round: 'แรก', age: '15ปีหญิง', versus: 'เขียว vs ฟ้า', status: 'pending', winner: null },
-          { id: 78, sport: 'วอลเลย์บอล', date: '2/7/69', time: '15.00 - 16.00', round: 'แรก', age: '12ปีชาย', versus: 'เขียว vs ฟ้า', status: 'pending', winner: null },
-          { id: 79, sport: 'วอลเลย์บอล', date: '3/7/69', time: '09.00 - 10.00', round: 'แรก', age: '12ปีหญิง', versus: 'ฟ้า vs ชมพู', status: 'pending', winner: null },
-          { id: 80, sport: 'วอลเลย์บอล', date: '3/7/69', time: '10.00 - 11.00', round: 'แรก', age: '15ปีชาย', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 81, sport: 'วอลเลย์บอล', date: '3/7/69', time: '11.00 - 12.00', round: 'แรก', age: '12ปีหญิง', versus: 'เขียว vs ชมพู', status: 'pending', winner: null },
-          { id: 82, sport: 'วอลเลย์บอล', date: '3/7/69', time: '13.00 - 14.00', round: 'ชิงชนะเลิศ', age: '12ปีชาย', versus: 'ชิง 1 vs 2', status: 'pending', winner: null },
-          { id: 83, sport: 'วอลเลย์บอล', date: '3/7/69', time: '15.00 - 16.00', round: 'ชิงชนะเลิศ', age: '12ปีหญิง', versus: 'ชิง 1 vs 2', status: 'pending', winner: null },
-          { id: 84, sport: 'วอลเลย์บอล', date: '6/7/69', time: '09.00 - 10.00', round: 'ชิงชนะเลิศ', age: '15ปีหญิง', versus: 'ชิง 1 vs 2', status: 'pending', winner: null },
-          { id: 85, sport: 'วอลเลย์บอล', date: '6/7/69', time: '10.00-11.00', round: 'ชิงชนะเลิศ', age: '15ปีชาย', versus: 'ชิง 1 vs 2', status: 'pending', winner: null },
-
-          // เซปักตะกร้อ
-          { id: 86, sport: 'เซปักตะกร้อ', date: '3/7/69', time: '11:30-12:00', round: 'แรก', age: '15 ปีชาย', versus: 'ฟ้า vs เขียว', status: 'pending', winner: null },
-          { id: 87, sport: 'เซปักตะกร้อ', date: '3/7/69', time: '13:00-13:30', round: 'แรก', age: '12 ปีหญิง', versus: 'ชมพู vs ฟ้า', status: 'pending', winner: null },
-          { id: 88, sport: 'เซปักตะกร้อ', date: '3/7/69', time: '13:30-14:00', round: 'แรก', age: '15 ปีหญิง', versus: 'ชมพู vs ฟ้า', status: 'pending', winner: null },
-          { id: 89, sport: 'เซปักตะกร้อ', date: '3/7/69', time: '14:00-14:30', round: 'แรก', age: '12 ปีชาย', versus: 'เขียว vs ฟ้า', status: 'pending', winner: null },
-          { id: 90, sport: 'เซปักตะกร้อ', date: '3/7/69', time: '14:30-15:00', round: 'แรก', age: '15 ปีชาย', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 91, sport: 'เซปักตะกร้อ', date: '3/7/69', time: '15:00-15:30', round: 'แรก', age: '15 ปีหญิง', versus: 'เขียว vs ชมพู', status: 'pending', winner: null },
-          { id: 92, sport: 'เซปักตะกร้อ', date: '6/7/69', time: '09:00-09:30', round: 'แรก', age: '12 ปีชาย', versus: 'ฟ้า vs ชมพู', status: 'pending', winner: null },
-          { id: 93, sport: 'เซปักตะกร้อ', date: '6/7/69', time: '09:30-10:00', round: 'แรก', age: '15 ปีหญิง', versus: 'เขียว vs ฟ้า', status: 'pending', winner: null },
-          { id: 94, sport: 'เซปักตะกร้อ', date: '6/7/69', time: '10:00-10:30', round: 'แรก', age: '12 ปีหญิง', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 95, sport: 'เซปักตะกร้อ', date: '6/7/69', time: '10:30-11:00', round: 'แรก', age: '12 ปีชาย', versus: 'ชมพู vs เขียว', status: 'pending', winner: null },
-          { id: 96, sport: 'เซปักตะกร้อ', date: '6/7/69', time: '11:00-11:30', round: 'แรก', age: '12 ปีหญิง', versus: 'เขียว vs ฟ้า', status: 'pending', winner: null },
-          { id: 97, sport: 'เซปักตะกร้อ', date: '6/7/69', time: '11:30-12:00', round: 'แรก', age: '15 ปีชาย', versus: 'ฟ้า vs ชมพู', status: 'pending', winner: null },
-          { id: 98, sport: 'เซปักตะกร้อ', date: '7/7/69', time: '14:00-14:30', round: 'ชิงชนะเลิศ', age: '12 ปีหญิง', versus: 'ชิง 1 vs 2', status: 'pending', winner: null },
-          { id: 99, sport: 'เซปักตะกร้อ', date: '7/7/69', time: '14:30-15:00', round: 'ชิงชนะเลิศ', age: '12 ปีชาย', versus: 'ชิง 1 vs 2', status: 'pending', winner: null },
-          { id: 100, sport: 'เซปักตะกร้อ', date: '7/7/69', time: '15:00-15:30', round: 'ชิงชนะเลิศ', age: '15 ปีหญิง', versus: 'ชิง 1 vs 2', status: 'pending', winner: null },
-          { id: 101, sport: 'เซปักตะกร้อ', date: '7/7/69', time: '15:30-16:00', round: 'ชิงชนะเลิศ', age: '15 ปีชาย', versus: 'ชิง 1 vs 2', status: 'pending', winner: null }
+            { id: 1, sport: 'ปิงปอง', date: '1/7/69', time: '13.00-13.30', round: 'แรก', age: '15ปีชาย', versus: 'ฟ้า vs เขียว', status: 'announced', winner: 'blue', loser: 'green', scores: [3, 1], rawScore: '3 - 1' },
+            { id: 2, sport: 'ปิงปอง', date: '1/7/69', time: '13.30-14.00', round: 'แรก', age: '15ปีหญิง', versus: 'ชมพู vs ฟ้า', status: 'announced', winner: 'pink', loser: 'blue', scores: [3, 0], rawScore: '3 - 0' },
+            { id: 6, sport: 'ปิงปอง', date: '2/7/69', time: '14.00-14.30', round: 'ชิงชนะเลิศ', age: '15ปีชาย', versus: 'ฟ้า vs ชมพู', status: 'announced', winner: 'blue', loser: 'pink', scores: [3, 2], rawScore: '3 - 2' },
+            { id: 99, sport: 'ปิงปอง', date: '2/7/69', time: '14.30-15.00', round: 'ชิงชนะเลิศ', age: '15ปีหญิง', versus: 'ชมพู vs เขียว', status: 'announced', winner: 'pink', loser: 'green', scores: [3, 1], rawScore: '3 - 1' },
+            { id: 7, sport: 'บอลพลาสติก', date: '7/7/69', time: '10.30-11.00', round: 'แรก', age: '9ปี (ผสม)', versus: 'ชมพู vs ฟ้า', status: 'pending' },
+            { id: 10, sport: 'บอลพลาสติก', date: '7/7/69', time: '13.30-14.00', round: 'ชิงชนะเลิศ', age: '9ปี (ผสม)', versus: 'ชิง 1 vs ชิง 2', status: 'pending' },
+            { id: 11, sport: 'เปตอง', date: '1/7/69', time: '11.00-11.30', round: 'แรก', age: '12ปีหญิง', versus: 'ฟ้า vs เขียว', status: 'announced', winner: 'green', loser: 'blue', scores: [5, 11], rawScore: '5 - 11' },
+            { id: 100, sport: 'เปตอง', date: '3/7/69', time: '13.00-13.30', round: 'ชิงชนะเลิศ', age: '12ปีหญิง', versus: 'เขียว vs ชมพู', status: 'announced', winner: 'green', loser: 'pink', scores: [13, 8], rawScore: '13 - 8' },
+            { id: 101, sport: 'เปตอง', date: '3/7/69', time: '14.00-14.30', round: 'ชิงชนะเลิศ', age: '15ปีหญิง', versus: 'ชิง 1 vs ชิง 2', status: 'pending' },
+            { id: 15, sport: 'ฟุตซอล 5 คน', date: '1/7/69', time: '13.00-13.30', round: 'แรก', age: '12ปีชาย', versus: 'ชมพู vs เขียว', status: 'pending' },
+            { id: 17, sport: 'ฟุตซอล 5 คน', date: '6/7/69', time: '14.00-14.30', round: 'ชิงชนะเลิศ', age: '12ปีชาย', versus: 'เขียว vs ฟ้า', status: 'announced', winner: 'blue', loser: 'green', scores: [1, 4], rawScore: '1 - 4' },
+            { id: 103, sport: 'แชร์บอล', date: '7/7/69', time: '14.00-14.30', round: 'ชิงชนะเลิศ', age: '10ปีชาย', versus: 'ชมพู vs ฟ้า', status: 'announced', winner: 'pink', loser: 'blue', scores: [20, 15], rawScore: '20 - 15' },
+            { id: 105, sport: 'ฟุตบอล 7 คน', date: '10/7/69', time: '10.00-10.30', round: 'ชิงชนะเลิศ', age: '10ปีชาย', versus: 'ฟ้า vs เขียว', status: 'announced', winner: 'green', loser: 'blue', scores: [1, 2], rawScore: '1 - 2' },
+            { id: 26, sport: 'วอลเลย์บอล', date: '6/7/69', time: '09.00-10.00', round: 'ชิงชนะเลิศ', age: '15ปีหญิง', versus: 'ฟ้า vs ชมพู', status: 'announced', winner: 'blue', loser: 'pink', scores: [2, 0], rawScore: '2 - 0' },
+            { id: 107, sport: 'เซปักตะกร้อ', date: '7/7/69', time: '14.00-14.30', round: 'ชิงชนะเลิศ', age: '12ปีชาย', versus: 'ฟ้า vs เขียว', status: 'announced', winner: 'green', loser: 'blue', scores: [0, 2], rawScore: '0 - 2' },
         ];
 
-        const dateOptions = Array.from(new Set(mockSchedules.map(item => item.date)));
+        const initialSettings = {
+            siteName: 'ระบบจัดการแข่งขันกีฬาสี',
+            schoolYear: 'ประจำปีการศึกษา 2569',
+            logo: null,
+            footerTitle: 'กีฬาสีภายใน 2569',
+            footerSlogan: 'มุ่งมั่นสร้างความสามัคคี รู้แพ้ รู้ชนะ รู้อภัย และส่งเสริมสุขภาพด้วยกีฬาสีสัมพันธ์ประจำปี',
+            footerEmail: 'sport@school.ac.th',
+            footerPhone: '02-xxx-xxxx',
+            footerLocation: 'สนามกีฬาโรงเรียนหลัก และอาคารอเนกประสงค์',
+            footerCopyright: '© 2569 ระบบจัดการแข่งขันกีฬาสีโรงเรียน. สงวนลิขสิทธิ์'
+        };
+
+        const dateOptions = ['1/7/69', '2/7/69', '3/7/69', '6/7/69', '7/7/69', '10/7/69'];
 
         // --- Helper Functions ---
         const matchColorText = (text, teamColors) => {
-        if (!text) return null;
-        for (const color of teamColors) {
-            if (text.includes(color.name.replace('สี', ''))) return color.id;
-        }
-        return null;
+            if (!text) return null;
+            for (const color of teamColors) {
+                if (text.includes(color.name.replace('สี', ''))) return color.id;
+            }
+            return null;
         };
 
         const getSportIcon = (sportName, size = 16) => {
-        if (!sportName) return <Activity size={size} />;
-        if (sportName.includes('ปิงปอง')) return <CircleDot size={size} />;
-        if (sportName.includes('บอล')) return <Dribbble size={size} />;
-        if (sportName.includes('เปตอง')) return <Target size={size} />;
-        if (sportName.includes('ฟุตซอล')) return <Goal size={size} />;
-        if (sportName.includes('แชร์บอล')) return <CircleDashed size={size} />;
-        if (sportName.includes('วอลเลย์')) return <Aperture size={size} />;
-        if (sportName.includes('ตะกร้อ')) return <Orbit size={size} />;
-        return <Activity size={size} />;
+            if (!sportName) return <Activity size={size} />;
+            if (sportName.includes('ปิงปอง')) return <CircleDot size={size} />;
+            if (sportName.includes('บอล')) return <Dribbble size={size} />;
+            if (sportName.includes('เปตอง')) return <Target size={size} />;
+            if (sportName.includes('ฟุตซอล')) return <Goal size={size} />;
+            if (sportName.includes('แชร์บอล')) return <CircleDashed size={size} />;
+            if (sportName.includes('วอลเลย์')) return <Aperture size={size} />;
+            if (sportName.includes('ตะกร้อ')) return <Orbit size={size} />;
+            return <Activity size={size} />;
         };
 
         // --- Custom Hook for LocalStorage ---
         function useLocalStorage(key, initialValue) {
-        const [storedValue, setStoredValue] = useState(() => {
-            try {
-            const item = window.localStorage.getItem(key);
-            return item ? JSON.parse(item) : initialValue;
-            } catch (error) {
-            console.error(error);
-            return initialValue;
-            }
-        });
+            const [storedValue, setStoredValue] = useState(() => {
+                try {
+                    const item = window.localStorage.getItem(key);
+                    return item ? JSON.parse(item) : initialValue;
+                } catch (error) {
+                    console.error(error);
+                    return initialValue;
+                }
+            });
 
-        const setValue = (value) => {
-            try {
-            const valueToStore = value instanceof Function ? value(storedValue) : value;
-            setStoredValue(valueToStore);
-            window.localStorage.setItem(key, JSON.stringify(valueToStore));
-            } catch (error) {
-            console.error(error);
-            }
-        };
-        return [storedValue, setValue];
+            const setValue = (value) => {
+                try {
+                    const valueToStore = value instanceof Function ? value(storedValue) : value;
+                    setStoredValue(valueToStore);
+                    window.localStorage.setItem(key, JSON.stringify(valueToStore));
+                } catch (error) {
+                    console.error(error);
+                }
+            };
+            return [storedValue, setValue];
         }
 
-        // --- Footer Component ---
+        // --- Components ---
         const Footer = ({ settings }) => (
-        <footer className="bg-gray-900 text-gray-400 py-12 mt-12 w-full shrink-0">
-            <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
-            <div>
-                <h4 className="text-white font-bold mb-4 flex items-center justify-center md:justify-start gap-2">
-                {settings.logo ? (
-                    <img src={settings.logo} alt="Logo" className="w-6 h-6 object-contain rounded-full bg-white p-0.5" />
-                ) : (
-                    <Trophy className="text-pink-500" size={20}/>
-                )}
-                {settings.footerTitle}
-                </h4>
-                <p className="text-sm leading-relaxed">{settings.footerSlogan}</p>
-            </div>
-            <div>
-                <h4 className="text-white font-bold mb-4">ติดต่อสอบถาม</h4>
-                <div className="space-y-2 text-sm">
-                <p className="flex items-center justify-center md:justify-start gap-2"><Mail size={14}/> {settings.footerEmail}</p>
-                <p className="flex items-center justify-center md:justify-start gap-2"><Phone size={14}/> {settings.footerPhone}</p>
+            <footer className="bg-gray-900 text-gray-400 py-12 mt-12 w-full shrink-0">
+                <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+                <div>
+                    <h4 className="text-white font-bold mb-4 flex items-center justify-center md:justify-start gap-2">
+                    {settings.logo ? (
+                        <img src={settings.logo} alt="Logo" className="w-6 h-6 object-contain rounded-full bg-white p-0.5" />
+                    ) : (
+                        <Trophy className="text-pink-500" size={20}/>
+                    )}
+                    {settings.footerTitle}
+                    </h4>
+                    <p className="text-sm leading-relaxed">{settings.footerSlogan}</p>
                 </div>
-            </div>
-            <div>
-                <h4 className="text-white font-bold mb-4">สถานที่จัดการแข่งขัน</h4>
-                <p className="text-sm flex items-center justify-center md:justify-start gap-2"><MapPin size={14}/> {settings.footerLocation}</p>
-            </div>
-            </div>
-            <div className="text-center mt-10 pt-6 border-t border-gray-800 text-xs text-gray-500">
-            {settings.footerCopyright}
-            </div>
-        </footer>
-        );
-
-        // --- PIN Modal ---
-        const PinModal = ({ isOpen, onClose, onSuccess }) => {
-        const [pin, setPin] = useState('');
-        const [error, setError] = useState(false);
-        const correctPin = '1234'; 
-
-        useEffect(() => { if (!isOpen) { setPin(''); setError(false); } }, [isOpen]);
-
-        useEffect(() => {
-            if (pin.length === 4) {
-            if (pin === correctPin) { onSuccess(); } 
-            else { setError(true); setTimeout(() => { setPin(''); setError(false); }, 800); }
-            }
-        }, [pin]);
-
-        const handleNumClick = (num) => { if (pin.length < 4 && !error) setPin(prev => prev + num); };
-        const handleBackspace = () => { if (!error) setPin(prev => prev.slice(0, -1)); };
-
-        if (!isOpen) return null;
-
-        return (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 transition-opacity">
-            <div className={`bg-white rounded-3xl w-full max-w-sm shadow-2xl flex flex-col items-center p-8 relative ${error ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
-                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 p-2 rounded-full transition-colors">
-                <X size={20}/>
-                </button>
-                <div className="w-16 h-16 bg-pink-100 text-[#cc0066] rounded-full flex items-center justify-center mb-4 shadow-inner">
-                <Lock size={32} />
-                </div>
-                <h2 className="text-xl font-bold mb-1 text-gray-800">เข้าสู่ระบบกรรมการ</h2>
-                <p className="text-sm text-gray-500 mb-6">รหัส PIN คือ: 1234</p>
-                <div className="flex gap-4 mb-8">
-                {[...Array(4)].map((_, i) => (
-                    <div key={i} className={`w-4 h-4 rounded-full transition-all ${ error ? 'bg-red-500' : i < pin.length ? 'bg-[#cc0066] scale-110 shadow-[0_0_10px_rgba(204,0,102,0.5)]' : 'bg-gray-200' }`} />
-                ))}
-                </div>
-                {error && <p className="text-red-500 text-sm mb-4 font-medium -mt-4">รหัส PIN ไม่ถูกต้อง</p>}
-                <div className="grid grid-cols-3 gap-4 w-full">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-                    <button key={num} onClick={() => handleNumClick(num.toString())} className="h-14 bg-gray-50 hover:bg-pink-50 rounded-2xl text-2xl font-medium active:scale-95 text-gray-700 transition-colors">{num}</button>
-                ))}
-                <div className="h-14"></div>
-                <button onClick={() => handleNumClick('0')} className="h-14 bg-gray-50 hover:bg-pink-50 rounded-2xl text-2xl font-medium active:scale-95 text-gray-700 transition-colors">0</button>
-                <button onClick={handleBackspace} className="h-14 bg-gray-50 hover:bg-red-50 text-gray-500 rounded-2xl flex items-center justify-center active:scale-95 transition-colors"><Eraser size={24} /></button>
-                </div>
-            </div>
-            </div>
-        );
-        };
-
-        // --- Top View Switcher ---
-        const ViewSwitcher = ({ viewState, setViewState, isAdminAuthenticated, setShowPinModal }) => {
-        const handleSwitch = (mode) => {
-            if (mode === 'admin') {
-            if (!isAdminAuthenticated) setShowPinModal(true);
-            else setViewState('admin');
-            } else { setViewState('public'); }
-        };
-        return (
-            <div className="flex bg-white/20 p-1 rounded-2xl backdrop-blur-md border border-white/30 w-full md:w-auto mt-4 md:mt-0">
-            <button onClick={() => handleSwitch('public')} className={`flex-1 relative flex justify-center items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all ${viewState === 'public' ? 'bg-white text-[#cc0066] shadow-md' : 'text-white hover:bg-white/10'}`}>
-                <Trophy size={16} /> โหมดทั่วไป
-            </button>
-            <button onClick={() => handleSwitch('admin')} className={`flex-1 relative flex justify-center items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all ${viewState === 'admin' ? 'bg-white text-[#cc0066] shadow-md' : 'text-white hover:bg-white/10'}`}>
-                {isAdminAuthenticated ? <Unlock size={16}/> : <Lock size={16} />} โหมดกรรมการ
-            </button>
-            </div>
-        );
-        };
-
-        // --- Score Entry Modal ---
-        const ScoreEntryModal = ({ match, onClose, appColors, onSave }) => {
-        if (!match) return null;
-        const teams = (match.versus || '').split(' vs ');
-
-        const handleSaveResult = (winnerId) => {
-            onSave(match.id, winnerId);
-            onClose();
-        };
-
-        return (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl flex flex-col overflow-hidden">
-                <div className="bg-gradient-to-r from-[#cc0066] to-[#e60073] p-5 flex items-center justify-between text-white">
-                <div className="flex items-center gap-2"><Flag size={20}/><h2 className="text-lg font-bold">บันทึกผลการแข่งขัน</h2></div>
-                <button onClick={onClose} className="bg-white/20 hover:bg-white/30 p-1.5 rounded-full transition-colors"><X size={20}/></button>
-                </div>
-                <div className="p-6 md:p-8 bg-gray-50 flex-1">
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm mb-6 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-1.5 h-full bg-[#cc0066]"></div>
-                    <div className="flex justify-between items-start mb-2 pl-2">
-                        <span className="text-sm font-bold text-[#cc0066] flex items-center gap-1.5">{getSportIcon(match.sport)} {match.sport}</span>
-                        <span className="text-xs bg-gray-100 px-2 py-1 rounded-md text-gray-600 font-medium">รอบ: {match.round}</span>
+                <div>
+                    <h4 className="text-white font-bold mb-4">ติดต่อสอบถาม</h4>
+                    <div className="space-y-2 text-sm">
+                    <p className="flex items-center justify-center md:justify-start gap-2"><Mail size={14}/> {settings.footerEmail}</p>
+                    <p className="flex items-center justify-center md:justify-start gap-2"><Phone size={14}/> {settings.footerPhone}</p>
                     </div>
-                    <div className="text-gray-800 font-black text-xl mb-1 pl-2">{match.versus}</div>
-                    <div className="text-gray-500 text-sm pl-2">รุ่น: {match.age} | {match.date} เวลา {match.time}</div>
                 </div>
-                <h3 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2"><Activity size={16} className="text-[#cc0066]"/> ประกาศผลทีมชนะเลิศ</h3>
-                <div className="grid grid-cols-2 gap-4">
-                    {teams.map((teamName, idx) => {
-                        const tColorId = matchColorText(teamName, appColors);
-                        const colorObj = appColors.find(c => c.id === tColorId);
-                        const bgColor = colorObj ? colorObj.bg : 'bg-gray-500';
-                        return (
-                        <button key={idx} onClick={() => handleSaveResult(tColorId)} className={`bg-white border-2 border-gray-200 hover:border-[#cc0066] rounded-2xl p-5 flex flex-col items-center shadow-sm active:scale-95 transition-all`}>
-                            <div className={`${bgColor} text-white px-4 py-2 rounded-xl text-sm font-bold mb-3 w-full text-center`}>{teamName}</div>
-                            <div className="text-gray-600 font-bold hover:text-[#cc0066]">เลือกเป็นผู้ชนะ</div>
-                        </button>
-                        )
-                    })}
+                <div>
+                    <h4 className="text-white font-bold mb-4">สถานที่จัดการแข่งขัน</h4>
+                    <p className="text-sm flex items-center justify-center md:justify-start gap-2"><MapPin size={14}/> {settings.footerLocation}</p>
                 </div>
                 </div>
-                <div className="p-5 border-t border-gray-100 bg-white flex justify-end gap-3">
-                <button onClick={onClose} className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl font-bold transition-colors">ยกเลิก</button>
+                <div className="text-center mt-10 pt-6 border-t border-gray-800 text-xs text-gray-500">
+                {settings.footerCopyright}
                 </div>
-            </div>
-            </div>
+            </footer>
         );
+
+        const PinModal = ({ isOpen, onClose, onSuccess }) => {
+            const [pin, setPin] = useState('');
+            const [error, setError] = useState(false);
+            const correctPin = '1234'; 
+
+            useEffect(() => { if (!isOpen) { setPin(''); setError(false); } }, [isOpen]);
+
+            useEffect(() => {
+                if (pin.length === 4) {
+                if (pin === correctPin) { onSuccess(); } 
+                else { setError(true); setTimeout(() => { setPin(''); setError(false); }, 800); }
+                }
+            }, [pin]);
+
+            const handleNumClick = (num) => { if (pin.length < 4 && !error) setPin(prev => prev + num); };
+            const handleBackspace = () => { if (!error) setPin(prev => prev.slice(0, -1)); };
+
+            if (!isOpen) return null;
+
+            return (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 transition-opacity">
+                <div className={`bg-white rounded-3xl w-full max-w-sm shadow-2xl flex flex-col items-center p-8 relative ${error ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
+                    <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 p-2 rounded-full transition-colors">
+                    <X size={20}/>
+                    </button>
+                    <div className="w-16 h-16 bg-pink-100 text-[#cc0066] rounded-full flex items-center justify-center mb-4 shadow-inner">
+                    <Lock size={32} />
+                    </div>
+                    <h2 className="text-xl font-bold mb-1 text-gray-800">เข้าสู่ระบบกรรมการ</h2>
+                    <p className="text-sm text-gray-500 mb-6">รหัส PIN ทดสอบคือ: 1234</p>
+                    <div className="flex gap-4 mb-8">
+                    {[...Array(4)].map((_, i) => (
+                        <div key={i} className={`w-4 h-4 rounded-full transition-all ${ error ? 'bg-red-500' : i < pin.length ? 'bg-[#cc0066] scale-110 shadow-[0_0_10px_rgba(204,0,102,0.5)]' : 'bg-gray-200' }`} />
+                    ))}
+                    </div>
+                    {error && <p className="text-red-500 text-sm mb-4 font-medium -mt-4">รหัส PIN ไม่ถูกต้อง</p>}
+                    <div className="grid grid-cols-3 gap-4 w-full">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+                        <button key={num} onClick={() => handleNumClick(num.toString())} className="h-14 bg-gray-50 hover:bg-pink-50 rounded-2xl text-2xl font-medium active:scale-95 text-gray-700 transition-colors">{num}</button>
+                    ))}
+                    <div className="h-14"></div>
+                    <button onClick={() => handleNumClick('0')} className="h-14 bg-gray-50 hover:bg-pink-50 rounded-2xl text-2xl font-medium active:scale-95 text-gray-700 transition-colors">0</button>
+                    <button onClick={handleBackspace} className="h-14 bg-gray-50 hover:bg-red-50 text-gray-500 rounded-2xl flex items-center justify-center active:scale-95 transition-colors"><Eraser size={24} /></button>
+                    </div>
+                </div>
+                </div>
+            );
+        };
+
+        const ViewSwitcher = ({ viewState, setViewState, isAdminAuthenticated, setShowPinModal }) => {
+            const handleSwitch = (mode) => {
+                if (mode === 'admin') {
+                if (!isAdminAuthenticated) setShowPinModal(true);
+                else setViewState('admin');
+                } else { setViewState('public'); }
+            };
+            return (
+                <div className="flex bg-white/20 p-1 rounded-2xl backdrop-blur-md border border-white/30 w-full md:w-auto mt-4 md:mt-0">
+                <button onClick={() => handleSwitch('public')} className={`flex-1 relative flex justify-center items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all ${viewState === 'public' ? 'bg-white text-[#cc0066] shadow-md' : 'text-white hover:bg-white/10'}`}>
+                    <Trophy size={16} /> โหมดทั่วไป
+                </button>
+                <button onClick={() => handleSwitch('admin')} className={`flex-1 relative flex justify-center items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all ${viewState === 'admin' ? 'bg-white text-[#cc0066] shadow-md' : 'text-white hover:bg-white/10'}`}>
+                    {isAdminAuthenticated ? <Unlock size={16}/> : <Lock size={16} />} โหมดกรรมการ
+                </button>
+                </div>
+            );
+        };
+
+        // --- Score Entry Modal (อัปเดตระบบกรอกสกอร์) ---
+        const ScoreEntryModal = ({ match, onClose, appColors, onSave }) => {
+            if (!match) return null;
+            
+            const initialTeams = (match.versus || '').split(' vs ');
+            const [team1Name, setTeam1Name] = useState(initialTeams[0] ? initialTeams[0].trim() : '');
+            const [team2Name, setTeam2Name] = useState(initialTeams[1] ? initialTeams[1].trim() : '');
+
+            const [score1, setScore1] = useState(match.scores ? match.scores[0] : '');
+            const [score2, setScore2] = useState(match.scores ? match.scores[1] : '');
+
+            useEffect(() => {
+                const t = (match.versus || '').split(' vs ');
+                setTeam1Name(t[0] ? t[0].trim() : '');
+                setTeam2Name(t[1] ? t[1].trim() : '');
+                setScore1(match.scores ? match.scores[0] : '');
+                setScore2(match.scores ? match.scores[1] : '');
+            }, [match]);
+
+            const handleSaveResult = () => {
+                if (score1 === '' || score2 === '') {
+                    alert('กรุณากรอกคะแนน (สกอร์) ให้ครบถ้วนทั้งสองทีม');
+                    return;
+                }
+
+                const t1ColorId = matchColorText(team1Name, appColors);
+                const t2ColorId = matchColorText(team2Name, appColors);
+
+                let winnerId = null;
+                let loserId = null;
+                const s1 = Number(score1);
+                const s2 = Number(score2);
+
+                if (s1 > s2) {
+                    winnerId = t1ColorId;
+                    loserId = t2ColorId;
+                } else if (s2 > s1) {
+                    winnerId = t2ColorId;
+                    loserId = t1ColorId;
+                }
+
+                onSave(match.id, {
+                    versus: `${team1Name} vs ${team2Name}`,
+                    status: 'announced',
+                    winner: winnerId,
+                    loser: loserId,
+                    scores: [s1, s2],
+                    rawScore: `${s1} - ${s2}`
+                });
+                onClose();
+            };
+
+            const t1ColorObj = appColors.find(c => c.id === matchColorText(team1Name, appColors));
+            const t2ColorObj = appColors.find(c => c.id === matchColorText(team2Name, appColors));
+
+            return (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+                <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl flex flex-col overflow-hidden">
+                    <div className="bg-gradient-to-r from-[#cc0066] to-[#e60073] p-5 flex items-center justify-between text-white">
+                    <div className="flex items-center gap-2"><Flag size={20}/><h2 className="text-lg font-bold">บันทึกผลคะแนน (สกอร์)</h2></div>
+                    <button onClick={onClose} className="bg-white/20 hover:bg-white/30 p-1.5 rounded-full transition-colors"><X size={20}/></button>
+                    </div>
+                    <div className="p-6 md:p-8 bg-gray-50 flex-1">
+                        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm mb-6 relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-1.5 h-full bg-[#cc0066]"></div>
+                            <div className="flex justify-between items-start mb-2 pl-2">
+                                <span className="text-sm font-bold text-[#cc0066] flex items-center gap-1.5">{getSportIcon(match.sport)} {match.sport}</span>
+                                <span className="text-xs bg-gray-100 px-2 py-1 rounded-md text-gray-600 font-medium">รอบ: {match.round}</span>
+                            </div>
+                            <div className="text-gray-500 text-sm pl-2">รุ่น: {match.age} | {match.date} เวลา {match.time}</div>
+                        </div>
+
+                        <div className="mb-4 p-3 bg-blue-50 text-blue-800 text-xs rounded-xl border border-blue-100">
+                            * หากเป็นรอบ "ชิง 1 vs 2" คุณสามารถแก้ไขชื่อทีมด้านล่างให้เป็นชื่อสีจริง (เช่น ฟ้า vs แดง) ได้เลยก่อนใส่คะแนน
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 items-center">
+                            {/* Team 1 */}
+                            <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 flex flex-col items-center shadow-sm">
+                                <input 
+                                    type="text" 
+                                    value={team1Name} 
+                                    onChange={e => setTeam1Name(e.target.value)} 
+                                    className={`w-full text-center text-sm font-bold py-1.5 px-2 rounded-lg mb-3 outline-none border focus:border-pink-400 ${t1ColorObj ? t1ColorObj.bg + ' text-white border-transparent' : 'bg-gray-100 text-gray-700 border-gray-200'}`}
+                                    placeholder="ชื่อทีม 1"
+                                />
+                                <input 
+                                    type="number" 
+                                    value={score1} 
+                                    onChange={e => setScore1(e.target.value)} 
+                                    placeholder="0" 
+                                    className="w-20 text-center text-4xl font-black text-gray-800 border-b-2 border-gray-200 focus:border-[#cc0066] focus:outline-none pb-1 bg-transparent transition-colors"
+                                />
+                                <div className="text-xs text-gray-400 mt-2 font-medium">คะแนน / ประตู</div>
+                            </div>
+                            
+                            {/* Team 2 */}
+                            <div className="bg-white border-2 border-gray-100 rounded-2xl p-4 flex flex-col items-center shadow-sm">
+                                <input 
+                                    type="text" 
+                                    value={team2Name} 
+                                    onChange={e => setTeam2Name(e.target.value)} 
+                                    className={`w-full text-center text-sm font-bold py-1.5 px-2 rounded-lg mb-3 outline-none border focus:border-pink-400 ${t2ColorObj ? t2ColorObj.bg + ' text-white border-transparent' : 'bg-gray-100 text-gray-700 border-gray-200'}`}
+                                    placeholder="ชื่อทีม 2"
+                                />
+                                <input 
+                                    type="number" 
+                                    value={score2} 
+                                    onChange={e => setScore2(e.target.value)} 
+                                    placeholder="0" 
+                                    className="w-20 text-center text-4xl font-black text-gray-800 border-b-2 border-gray-200 focus:border-[#cc0066] focus:outline-none pb-1 bg-transparent transition-colors"
+                                />
+                                <div className="text-xs text-gray-400 mt-2 font-medium">คะแนน / ประตู</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="p-5 border-t border-gray-100 bg-white flex justify-end gap-3">
+                    <button onClick={onClose} className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl font-bold transition-colors">ยกเลิก</button>
+                    <button onClick={handleSaveResult} className="px-6 py-2.5 bg-[#cc0066] hover:bg-pink-700 text-white rounded-xl font-bold flex items-center gap-2 shadow-md transition-colors"><CheckCircle2 size={18}/> บันทึกผลสกอร์</button>
+                    </div>
+                </div>
+                </div>
+            );
         };
 
 
         // --- PUBLIC VIEW ---
-        const PublicView = ({ viewState, setViewState, isAdminAuthenticated, setShowPinModal, appColors, appSports, appSettings, schedules, dateOptions }) => {
-        const [filterSport, setFilterSport] = useState('All');
-        const [filterDate, setFilterDate] = useState('All');
-        const [search, setSearch] = useState('');
+        const PublicView = ({ viewState, setViewState, isAdminAuthenticated, setShowPinModal, appColors, calculatedColors, appSports, appSettings, schedules, dateOptions }) => {
+            const [filterSport, setFilterSport] = useState('All');
+            const [filterDate, setFilterDate] = useState('All');
+            const [search, setSearch] = useState('');
 
-        const filteredSchedules = useMemo(() => {
-            return schedules.filter(s => {
-            const matchSport = filterSport === 'All' || s.sport === filterSport;
-            const matchDate = filterDate === 'All' || s.date === filterDate;
-            const matchSearch = (s.versus || '').includes(search) || (s.age || '').includes(search);
-            return matchSport && matchDate && matchSearch;
-            });
-        }, [schedules, filterSport, filterDate, search]);
+            const filteredSchedules = useMemo(() => {
+                return schedules.filter(s => {
+                const matchSport = filterSport === 'All' || s.sport === filterSport;
+                const matchDate = filterDate === 'All' || s.date === filterDate;
+                const matchSearch = (s.versus || '').includes(search) || (s.age || '').includes(search);
+                return matchSport && matchDate && matchSearch;
+                });
+            }, [schedules, filterSport, filterDate, search]);
 
-        return (
-            <div className="min-h-screen bg-gray-50/50 font-sans flex flex-col">
-            <div className="relative bg-gradient-to-br from-[#800040] via-[#cc0066] to-[#ff3385] text-white overflow-hidden shadow-lg shrink-0">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
-                <div className="absolute bottom-0 left-10 w-48 h-48 bg-pink-300 opacity-20 rounded-full blur-2xl translate-y-1/2"></div>
-                <div className="max-w-6xl mx-auto px-6 py-8 md:py-12 relative z-10">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex flex-col md:flex-row items-center gap-5 text-center md:text-left w-full md:w-auto">
-                    <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-lg border border-white/20 shrink-0 overflow-hidden">
-                        {appSettings.logo ? <img src={appSettings.logo} alt="Logo" className="w-full h-full object-cover bg-white" /> : <Award size={40} className="text-white drop-shadow-md" />}
+            return (
+                <div className="min-h-screen bg-gray-50/50 font-sans flex flex-col">
+                <div className="relative bg-gradient-to-br from-[#800040] via-[#cc0066] to-[#ff3385] text-white overflow-hidden shadow-lg shrink-0">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
+                    <div className="absolute bottom-0 left-10 w-48 h-48 bg-pink-300 opacity-20 rounded-full blur-2xl translate-y-1/2"></div>
+                    <div className="max-w-6xl mx-auto px-6 py-8 md:py-12 relative z-10">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="flex flex-col md:flex-row items-center gap-5 text-center md:text-left w-full md:w-auto">
+                        <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-lg border border-white/20 shrink-0 overflow-hidden">
+                            {appSettings.logo ? <img src={appSettings.logo} alt="Logo" className="w-full h-full object-cover bg-white" /> : <Award size={40} className="text-white drop-shadow-md" />}
+                        </div>
+                        <div>
+                            <div className="inline-block px-3 py-1 bg-white/15 rounded-full text-pink-100 text-xs font-semibold mb-2">{appSettings.schoolYear}</div>
+                            <h1 className="text-2xl md:text-4xl font-black tracking-tight drop-shadow-lg mb-1">{appSettings.siteName}</h1>
+                            <p className="text-pink-100/90 text-sm md:text-base font-medium">ตารางการแข่งขันและสรุปผลเหรียญรางวัลภายในโรงเรียน</p>
+                        </div>
+                        </div>
+                        <ViewSwitcher viewState={viewState} setViewState={setViewState} isAdminAuthenticated={isAdminAuthenticated} setShowPinModal={setShowPinModal} />
                     </div>
-                    <div>
-                        <div className="inline-block px-3 py-1 bg-white/15 rounded-full text-pink-100 text-xs font-semibold mb-2">{appSettings.schoolYear}</div>
-                        <h1 className="text-2xl md:text-4xl font-black tracking-tight drop-shadow-lg mb-1">{appSettings.siteName}</h1>
-                        <p className="text-pink-100/90 text-sm md:text-base font-medium">ตารางการแข่งขันและสรุปผลเหรียญรางวัลภายในโรงเรียน</p>
                     </div>
-                    </div>
-                    <ViewSwitcher viewState={viewState} setViewState={setViewState} isAdminAuthenticated={isAdminAuthenticated} setShowPinModal={setShowPinModal} />
                 </div>
-                </div>
-            </div>
 
-            <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6 mt-4 flex-1 w-full">
-                <section className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-pink-100/50 p-4 md:p-6">
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-full bg-pink-100 text-[#cc0066] flex items-center justify-center"><Award size={20} /></div>
-                    <h2 className="text-xl font-bold text-gray-800">สรุปผลเหรียญรางวัลรวม</h2>
-                </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {appColors.map(team => {
-                        // คำนวณเหรียญใหม่จากตารางแข่งจริง (อิงจาก mockSchedules ที่ถูกอัปเดต)
-                        const wins = schedules.filter(s => s.winner === team.id && s.status === 'announced');
-                        const goldCount = wins.filter(w => w.round.includes('ชิง')).length; // ถ้าชนะรอบชิง = เหรียญทอง (ตัวอย่าง)
-                        // เพื่อความง่ายใน Demo จะยังคงใช้ค่าจาก state เดิมเป็นตัวอย่าง
-                        
-                        return (
-                        <div key={team.id} className="border border-gray-100 rounded-xl p-4 flex flex-col bg-white shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-                            <div className={`absolute top-0 left-0 w-full h-1.5 ${team.bg}`}></div>
-                            <div className="flex items-center justify-between mb-3 border-b border-gray-100 pb-3 mt-1">
-                                <span className={`px-2.5 py-1 rounded-md text-sm font-bold ${team.bg} text-white`}>{team.name}</span>
-                                <div className="text-right">
-                                <div className="text-2xl font-black text-gray-800 leading-none">{team.gold + team.silver + team.bronze}</div>
-                                <div className="text-[10px] text-gray-500 font-medium uppercase tracking-wide mt-1">รวมเหรียญ</div>
-                                </div>
-                            </div>
-                            <div className="space-y-2 mt-1">
-                                <div className="flex justify-between items-center text-sm bg-yellow-50 px-2.5 py-1.5 rounded-lg border border-yellow-100/50">
-                                <span className="flex items-center gap-2 text-yellow-700 font-medium"><span className="w-2.5 h-2.5 rounded-full bg-yellow-400"></span> ทอง</span>
-                                <span className="font-bold text-gray-800">{team.gold}</span>
-                                </div>
-                                <div className="flex justify-between items-center text-sm bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200/50">
-                                <span className="flex items-center gap-2 text-gray-600 font-medium"><span className="w-2.5 h-2.5 rounded-full bg-gray-400"></span> เงิน</span>
-                                <span className="font-bold text-gray-800">{team.silver}</span>
-                                </div>
-                                <div className="flex justify-between items-center text-sm bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-100/50">
-                                <span className="flex items-center gap-2 text-amber-700 font-medium"><span className="w-2.5 h-2.5 rounded-full bg-amber-600"></span> ทองแดง</span>
-                                <span className="font-bold text-gray-800">{team.bronze}</span>
-                                </div>
-                            </div>
-                        </div>
-                        )
-                    })}
-                </div>
-                </section>
-
-                <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="bg-gradient-to-r from-[#cc0066] to-pink-500 p-5 text-white flex items-center gap-3">
-                    <Crown size={26} className="text-yellow-300 drop-shadow-md" />
-                    <h2 className="text-xl font-bold drop-shadow-sm">ทำเนียบแชมป์ <span className="font-normal text-pink-100 text-sm hidden sm:inline-block ml-2">(ทีมชนะเลิศแต่ละชนิดกีฬา)</span></h2>
-                </div>
-                <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                    {appSports.map(sport => {
-                    const finals = schedules.filter(s => s.sport === sport && (s.round || '').includes('ชิง'));
-                    if (finals.length === 0) return null;
-                    return (
-                        <div key={sport} className="border border-gray-100 rounded-2xl bg-white shadow-sm overflow-hidden group">
-                        <div className="bg-gray-50 px-4 py-3 font-bold text-gray-800 flex items-center gap-2 border-b border-gray-100">
-                            <span className="text-[#cc0066]">{getSportIcon(sport, 18)}</span> {sport}
-                        </div>
-                        <div className="p-4 space-y-3">
-                            {finals.map(match => {
-                                const winnerColor = appColors.find(c => c.id === match.winner);
-                                return (
-                                <div key={match.id} className="flex justify-between items-center text-sm border-b border-gray-50 last:border-0 pb-3 last:pb-0">
-                                    <span className="text-gray-600 font-medium truncate mr-2 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-pink-300"></span> {match.age}</span>
-                                    {match.status === 'announced' && winnerColor ? (
-                                    <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold ${winnerColor.bg} text-white whitespace-nowrap shadow-sm`}>🏆 {winnerColor.name}</span>
-                                    ) : (
-                                    <span className="px-2.5 py-1 rounded-md text-[11px] bg-gray-100 text-gray-500"><Clock size={10} className="inline mr-1"/>รอผล</span>
-                                    )}
-                                </div>
-                                )
-                            })}
-                        </div>
-                        </div>
-                    )
-                    })}
-                </div>
-                </section>
-
-                <section className="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-gray-100">
-                <div className="flex flex-col mb-6">
-                    <div className="flex items-center gap-3 mb-5">
-                    <div className="w-10 h-10 rounded-full bg-pink-100 text-[#cc0066] flex items-center justify-center"><Calendar size={20} /></div>
-                    <h2 className="text-xl font-bold text-gray-800">ตารางการแข่งขันทั้งหมด</h2>
+                <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6 mt-4 flex-1 w-full">
+                    {/* Medal Summary */}
+                    <section className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-pink-100/50 p-4 md:p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 rounded-full bg-pink-100 text-[#cc0066] flex items-center justify-center"><Award size={20} /></div>
+                        <h2 className="text-xl font-bold text-gray-800">สรุปผลเหรียญรางวัลรวม</h2>
                     </div>
                     
-                    <div className="flex overflow-x-auto gap-3 pb-4 mb-2 hide-scrollbar">
-                    <button onClick={() => setFilterSport('All')} className={`flex items-center gap-2 px-5 py-2.5 rounded-full whitespace-nowrap text-sm font-semibold transition-all border ${filterSport === 'All' ? 'bg-[#cc0066] border-[#cc0066] text-white shadow-md' : 'bg-white border-gray-200 text-gray-600'}`}>
-                        <LayoutGrid size={16} /> รวมทุกชนิดกีฬา
-                    </button>
-                    {appSports.map(sport => (
-                        <button key={sport} onClick={() => setFilterSport(sport)} className={`flex items-center gap-2 px-5 py-2.5 rounded-full whitespace-nowrap text-sm font-semibold transition-all border ${filterSport === sport ? 'bg-[#cc0066] border-[#cc0066] text-white shadow-md' : 'bg-white border-gray-200 text-gray-600'}`}>
-                        {getSportIcon(sport, 16)} {sport}
-                        </button>
-                    ))}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {calculatedColors.map(team => {
+                            return (
+                            <div key={team.id} className="border border-gray-100 rounded-xl p-4 flex flex-col bg-white shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                                <div className={`absolute top-0 left-0 w-full h-1.5 ${team.bg}`}></div>
+                                <div className="flex items-center justify-between mb-3 border-b border-gray-100 pb-3 mt-1">
+                                    <span className={`px-2.5 py-1 rounded-md text-sm font-bold ${team.bg} text-white`}>{team.name}</span>
+                                    <div className="text-right">
+                                    <div className="text-2xl font-black text-gray-800 leading-none">{team.gold + team.silver + team.bronze}</div>
+                                    <div className="text-[10px] text-gray-500 font-medium uppercase tracking-wide mt-1">รวมเหรียญ</div>
+                                    </div>
+                                </div>
+                                <div className="space-y-2 mt-1">
+                                    <div className="flex justify-between items-center text-sm bg-yellow-50 px-2.5 py-1.5 rounded-lg border border-yellow-100/50">
+                                    <span className="flex items-center gap-2 text-yellow-700 font-medium"><span className="w-2.5 h-2.5 rounded-full bg-yellow-400"></span> ทอง</span>
+                                    <span className="font-bold text-gray-800">{team.gold}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200/50">
+                                    <span className="flex items-center gap-2 text-gray-600 font-medium"><span className="w-2.5 h-2.5 rounded-full bg-gray-400"></span> เงิน</span>
+                                    <span className="font-bold text-gray-800">{team.silver}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-100/50">
+                                    <span className="flex items-center gap-2 text-amber-700 font-medium"><span className="w-2.5 h-2.5 rounded-full bg-amber-600"></span> ทองแดง</span>
+                                    <span className="font-bold text-gray-800">{team.bronze}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            )
+                        })}
                     </div>
+                    <div className="text-xs text-gray-400 mt-4 text-right">* เหรียญทองคำนวณจากทีมที่ชนะในรอบชิงชนะเลิศอัตโนมัติ</div>
+                    </section>
 
-                    <div className="flex flex-wrap items-center gap-4 mt-2 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <div className="relative w-full md:w-auto md:min-w-[200px]">
-                        <Clock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <select value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="w-full pl-10 pr-8 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#cc0066]">
-                        <option value="All">ดูทุกวันที่แข่งขัน</option>
-                        {dateOptions.map(d => <option key={d} value={d}>วันที่ {d}</option>)}
-                        </select>
+                    {/* Champions Dashboard */}
+                    <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="bg-gradient-to-r from-[#cc0066] to-pink-500 p-5 text-white flex items-center gap-3">
+                        <Crown size={26} className="text-yellow-300 drop-shadow-md" />
+                        <h2 className="text-xl font-bold drop-shadow-sm">ทำเนียบแชมป์ <span className="font-normal text-pink-100 text-sm hidden sm:inline-block ml-2">(ทีมชนะเลิศและผลสกอร์)</span></h2>
                     </div>
-                    <div className="relative flex-1 min-w-[250px]">
-                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                        <input type="text" placeholder="ค้นหารุ่นอายุ หรือ คู่แข่งขัน..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#cc0066]" />
-                    </div>
-                    </div>
-                </div>
-
-                <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
-                    <table className="w-full text-sm text-left bg-white min-w-[700px]">
-                    <thead className="text-gray-700 bg-gray-50 border-b border-gray-200">
-                        <tr>
-                        <th className="py-4 px-5 font-bold">วันที่/เวลา</th><th className="py-4 px-5 font-bold">ชนิดกีฬา</th><th className="py-4 px-5 font-bold text-center">รอบ</th><th className="py-4 px-5 font-bold">รุ่นอายุ</th><th className="py-4 px-5 font-bold">คู่แข่งขัน</th><th className="py-4 px-5 font-bold text-center">สถานะ</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {filteredSchedules.length > 0 ? filteredSchedules.map((item) => (
-                        <tr key={item.id} className="hover:bg-pink-50/40">
-                            <td className="py-4 px-5"><div className="font-bold text-gray-700 whitespace-nowrap">{item.date}</div><div className="text-gray-500 text-xs whitespace-nowrap">{item.time}</div></td>
-                            <td className="py-4 px-5 font-semibold text-[#cc0066]"><div className="flex items-center gap-2 whitespace-nowrap">{getSportIcon(item.sport, 18)} {item.sport}</div></td>
-                            <td className="py-4 px-5 text-center"><span className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap ${item.round === 'ชิงชนะเลิศ' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>{item.round}</span></td>
-                            <td className="py-4 px-5 text-gray-700 font-medium whitespace-nowrap">{item.age}</td>
-                            <td className="py-4 px-5">
-                            <div className="flex items-center gap-2 whitespace-nowrap">
-                                {(item.versus || '').split(' vs ').map((team, idx) => {
-                                const colorData = appColors.find(c => c.id === matchColorText(team, appColors));
-                                return (
-                                    <React.Fragment key={idx}>
-                                    {idx > 0 && <span className="text-gray-400 text-xs italic">vs</span>}
-                                    <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${colorData ? `${colorData.bg} text-white shadow-sm` : 'bg-gray-200 text-gray-700'}`}>{team}</span>
-                                    </React.Fragment>
-                                )
+                    <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                        {appSports.map(sport => {
+                        const finals = schedules.filter(s => s.sport === sport && (s.round || '').includes('ชิง'));
+                        if (finals.length === 0) return null;
+                        return (
+                            <div key={sport} className="border border-gray-100 rounded-2xl bg-white shadow-sm overflow-hidden group">
+                            <div className="bg-gray-50 px-4 py-3 font-bold text-gray-800 flex items-center gap-2 border-b border-gray-100">
+                                <span className="text-[#cc0066]">{getSportIcon(sport, 18)}</span> {sport}
+                            </div>
+                            <div className="p-4 space-y-3">
+                                {finals.map(match => {
+                                    const winnerColor = appColors.find(c => c.id === match.winner);
+                                    return (
+                                    <div key={match.id} className="flex flex-col text-sm border-b border-gray-50 last:border-0 pb-3 last:pb-0">
+                                        <div className="text-gray-600 font-medium mb-1.5 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-pink-300"></span> {match.age}</div>
+                                        {match.status === 'announced' && winnerColor ? (
+                                            <div className="flex items-center justify-between bg-yellow-50 border border-yellow-100 p-2 rounded-lg">
+                                                <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${winnerColor.bg} text-white shadow-sm`}>🏆 {winnerColor.name}</span>
+                                                <span className="font-black text-gray-800">{match.rawScore}</span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center justify-between bg-gray-50 border border-gray-100 p-2 rounded-lg text-gray-400">
+                                                <span className="text-[11px]"><Clock size={10} className="inline mr-1"/>รอแข่งขัน</span>
+                                                <span className="font-bold">-</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    )
                                 })}
                             </div>
-                            </td>
-                            <td className="py-4 px-5 text-center">
-                            {item.status === 'announced' ? (
-                                <span className="bg-green-50 border border-green-200 text-green-700 px-3 py-1 rounded-md text-xs font-semibold whitespace-nowrap flex items-center justify-center gap-1.5"><CheckCircle2 size={14}/> รู้ผลแล้ว</span>
-                            ) : (
-                                <span className="bg-gray-50 border border-gray-200 text-gray-500 px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap flex items-center justify-center gap-1.5"><Clock size={14}/> รอดำเนินการ</span>
+                            </div>
+                        )
+                        })}
+                    </div>
+                    </section>
+
+                    {/* Schedule Table */}
+                    <section className="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-gray-100">
+                    <div className="flex flex-col mb-6">
+                        <div className="flex items-center gap-3 mb-5">
+                        <div className="w-10 h-10 rounded-full bg-pink-100 text-[#cc0066] flex items-center justify-center"><Calendar size={20} /></div>
+                        <h2 className="text-xl font-bold text-gray-800">ตารางการแข่งขันและรายงานผล</h2>
+                        </div>
+                        
+                        <div className="flex overflow-x-auto gap-3 pb-4 mb-2 hide-scrollbar">
+                        <button onClick={() => setFilterSport('All')} className={`flex items-center gap-2 px-5 py-2.5 rounded-full whitespace-nowrap text-sm font-semibold transition-all border ${filterSport === 'All' ? 'bg-[#cc0066] border-[#cc0066] text-white shadow-md' : 'bg-white border-gray-200 text-gray-600'}`}>
+                            <LayoutGrid size={16} /> รวมทุกชนิดกีฬา
+                        </button>
+                        {appSports.map(sport => (
+                            <button key={sport} onClick={() => setFilterSport(sport)} className={`flex items-center gap-2 px-5 py-2.5 rounded-full whitespace-nowrap text-sm font-semibold transition-all border ${filterSport === sport ? 'bg-[#cc0066] border-[#cc0066] text-white shadow-md' : 'bg-white border-gray-200 text-gray-600'}`}>
+                            {getSportIcon(sport, 16)} {sport}
+                            </button>
+                        ))}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-4 mt-2 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        <div className="relative w-full md:w-auto md:min-w-[200px]">
+                            <Clock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <select value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="w-full pl-10 pr-8 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-[#cc0066]">
+                            <option value="All">ดูทุกวันที่แข่งขัน</option>
+                            {dateOptions.map(d => <option key={d} value={d}>วันที่ {d}</option>)}
+                            </select>
+                        </div>
+                        <div className="relative flex-1 min-w-[250px]">
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                            <input type="text" placeholder="ค้นหารุ่นอายุ หรือ ทีม..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#cc0066]" />
+                        </div>
+                        </div>
+                    </div>
+
+                    <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+                        <table className="w-full text-sm text-left bg-white min-w-[800px]">
+                        <thead className="text-gray-700 bg-gray-50 border-b border-gray-200">
+                            <tr>
+                            <th className="py-4 px-5 font-bold w-24">วันที่/เวลา</th><th className="py-4 px-5 font-bold">ชนิดกีฬา/รุ่น</th><th className="py-4 px-5 font-bold text-center w-24">รอบ</th><th className="py-4 px-5 font-bold text-center min-w-[250px]">ผลการแข่งขัน (สกอร์)</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {filteredSchedules.length > 0 ? filteredSchedules.map((item) => {
+                                const teams = (item.versus || '').split(' vs ');
+                                const t1 = teams[0] ? teams[0].trim() : '';
+                                const t2 = teams[1] ? teams[1].trim() : '';
+                                const c1Id = matchColorText(t1, appColors);
+                                const c2Id = matchColorText(t2, appColors);
+                                const color1Data = appColors.find(c => c.id === c1Id);
+                                const color2Data = appColors.find(c => c.id === c2Id);
+
+                                const isAnnounced = item.status === 'announced';
+                                const isT1Loser = isAnnounced && item.loser === c1Id && c1Id;
+                                const isT2Loser = isAnnounced && item.loser === c2Id && c2Id;
+                                const isT1Winner = isAnnounced && item.winner === c1Id && c1Id;
+                                const isT2Winner = isAnnounced && item.winner === c2Id && c2Id;
+                                const isFinal = (item.round || '').includes('ชิง');
+
+                                return (
+                                <tr key={item.id} className="hover:bg-pink-50/40">
+                                    <td className="py-4 px-5"><div className="font-bold text-gray-700">{item.date}</div><div className="text-gray-500 text-xs">{item.time}</div></td>
+                                    <td className="py-4 px-5">
+                                        <div className="font-bold text-[#cc0066] flex items-center gap-2">{getSportIcon(item.sport, 16)} {item.sport}</div>
+                                        <div className="text-gray-600 mt-1 text-xs">{item.age}</div>
+                                    </td>
+                                    <td className="py-4 px-5 text-center"><span className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap ${isFinal ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>{item.round}</span></td>
+                                    
+                                    {/* 🔴 NEW: Score reporting layout */}
+                                    <td className="py-4 px-5">
+                                        <div className="flex items-center justify-center gap-3">
+                                            {/* Team 1 */}
+                                            <div className={`flex flex-col items-center flex-1 ${isT1Loser ? 'opacity-50 grayscale' : ''}`}>
+                                                <span className={`px-2.5 py-1 rounded-md text-xs font-bold whitespace-nowrap ${color1Data ? color1Data.bg + ' text-white shadow-sm' : 'bg-gray-200 text-gray-700'}`}>
+                                                    {t1}
+                                                </span>
+                                                {isT1Winner && isFinal && <span className="text-[10px] text-yellow-600 font-bold mt-1">🏆 แชมป์</span>}
+                                                {isT1Loser && <span className="text-[10px] text-red-500 font-bold mt-1">❌ ตกรอบ</span>}
+                                            </div>
+
+                                            {/* Score */}
+                                            <div className="flex flex-col items-center justify-center shrink-0 w-16">
+                                                <div className="font-black text-lg text-gray-800 bg-gray-100 px-3 py-1 rounded-lg border border-gray-200 shadow-inner">
+                                                    {isAnnounced ? item.rawScore : 'VS'}
+                                                </div>
+                                            </div>
+
+                                            {/* Team 2 */}
+                                            <div className={`flex flex-col items-center flex-1 ${isT2Loser ? 'opacity-50 grayscale' : ''}`}>
+                                                <span className={`px-2.5 py-1 rounded-md text-xs font-bold whitespace-nowrap ${color2Data ? color2Data.bg + ' text-white shadow-sm' : 'bg-gray-200 text-gray-700'}`}>
+                                                    {t2}
+                                                </span>
+                                                {isT2Winner && isFinal && <span className="text-[10px] text-yellow-600 font-bold mt-1">🏆 แชมป์</span>}
+                                                {isT2Loser && <span className="text-[10px] text-red-500 font-bold mt-1">❌ ตกรอบ</span>}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                )
+                            }) : (
+                            <tr><td colSpan="4" className="py-16 text-center text-gray-400">ไม่พบตารางการแข่งขัน</td></tr>
                             )}
-                            </td>
-                        </tr>
-                        )) : (
-                        <tr><td colSpan="6" className="py-16 text-center text-gray-400">ไม่พบตารางการแข่งขันที่ตรงกับเงื่อนไข</td></tr>
-                        )}
-                    </tbody>
-                    </table>
-                </div>
+                        </tbody>
+                        </table>
+                    </div>
                 </section>
             </div>
             <Footer settings={appSettings} />
@@ -617,425 +627,432 @@
 
         // --- Admin Settings Panel ---
         const ManageSettings = ({ settings, setSettings }) => {
-        const [localSettings, setLocalSettings] = useState(settings);
+            const [localSettings, setLocalSettings] = useState(settings);
 
-        const handleImageUpload = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => { setLocalSettings({ ...localSettings, logo: reader.result }); };
-            reader.readAsDataURL(file);
-            }
+            const handleImageUpload = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => { setLocalSettings({ ...localSettings, logo: reader.result }); };
+                reader.readAsDataURL(file);
+                }
+            };
+
+            const handleChange = (e) => {
+                const { name, value } = e.target;
+                setLocalSettings({ ...localSettings, [name]: value });
+            };
+
+            const handleSave = () => { setSettings(localSettings); };
+
+            return (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-8">
+                <div className="flex items-center gap-3 mb-6 text-[#cc0066]">
+                    <div className="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center"><SettingsIcon size={20} /></div>
+                    <h3 className="text-xl font-black text-gray-800">จัดการการตั้งค่าเว็บไซต์</h3>
+                </div>
+                
+                <div className="space-y-8">
+                    <div>
+                    <h4 className="font-bold text-gray-800 mb-3 border-b pb-2">ข้อมูลทั่วไป (General Info)</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">ชื่อเว็บไซต์</label>
+                        <input type="text" name="siteName" value={localSettings.siteName} onChange={handleChange} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+                        </div>
+                        <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">ปีการศึกษา</label>
+                        <input type="text" name="schoolYear" value={localSettings.schoolYear} onChange={handleChange} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+                        </div>
+                    </div>
+                    </div>
+                    <div>
+                    <h4 className="font-bold text-gray-800 mb-3 border-b pb-2">โลโก้เว็บไซต์</h4>
+                    <div className="flex flex-wrap items-center gap-6">
+                        <div className="w-24 h-24 bg-gray-100 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden shrink-0">
+                        {localSettings.logo ? <img src={localSettings.logo} alt="Preview" className="w-full h-full object-cover" /> : <ImageIcon size={32} className="text-gray-400" />}
+                        </div>
+                        <div>
+                        <label className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors shadow-sm inline-block">
+                            อัปโหลดรูปภาพใหม่
+                            <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                        </label>
+                        <p className="text-xs text-gray-400 mt-2">ขนาดแนะนำ 200x200px</p>
+                        {localSettings.logo && (
+                            <button onClick={() => setLocalSettings({...localSettings, logo: null})} className="text-xs text-red-500 mt-2 hover:underline block">ลบรูปภาพ</button>
+                        )}
+                        </div>
+                    </div>
+                    </div>
+                    <div>
+                    <h4 className="font-bold text-gray-800 mb-3 border-b pb-2">จัดการส่วนท้าย (Footer)</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">หัวข้อ Footer</label>
+                        <input type="text" name="footerTitle" value={localSettings.footerTitle} onChange={handleChange} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+                        </div>
+                        <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-600 mb-1">สโลแกน / คำอธิบายเพิ่มเติม</label>
+                        <textarea name="footerSlogan" value={localSettings.footerSlogan} onChange={handleChange} rows="2" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+                        </div>
+                        <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">อีเมลติดต่อ</label>
+                        <input type="text" name="footerEmail" value={localSettings.footerEmail} onChange={handleChange} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+                        </div>
+                        <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">เบอร์โทรศัพท์</label>
+                        <input type="text" name="footerPhone" value={localSettings.footerPhone} onChange={handleChange} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+                        </div>
+                        <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-600 mb-1">สถานที่จัดการแข่งขัน</label>
+                        <input type="text" name="footerLocation" value={localSettings.footerLocation} onChange={handleChange} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+                        </div>
+                        <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-600 mb-1">ข้อความลิขสิทธิ์</label>
+                        <input type="text" name="footerCopyright" value={localSettings.footerCopyright} onChange={handleChange} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+                        </div>
+                    </div>
+                    </div>
+                    <div className="pt-4 flex justify-end">
+                    <button onClick={handleSave} className="bg-[#cc0066] text-white px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-pink-700 shadow-md transition-all active:scale-95">
+                        <Save size={18}/> บันทึกการตั้งค่า
+                    </button>
+                    </div>
+                </div>
+                </div>
+            );
         };
 
-        const handleChange = (e) => {
-            const { name, value } = e.target;
-            setLocalSettings({ ...localSettings, [name]: value });
-        };
-
-        const handleSave = () => { setSettings(localSettings); };
-
-        return (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-8">
-            <div className="flex items-center gap-3 mb-6 text-[#cc0066]">
-                <div className="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center"><SettingsIcon size={20} /></div>
-                <h3 className="text-xl font-black text-gray-800">จัดการการตั้งค่าเว็บไซต์</h3>
-            </div>
-            
-            <div className="space-y-8">
-                <div>
-                <h4 className="font-bold text-gray-800 mb-3 border-b pb-2">ข้อมูลทั่วไป (General Info)</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">ชื่อเว็บไซต์</label>
-                    <input type="text" name="siteName" value={localSettings.siteName} onChange={handleChange} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
-                    </div>
-                    <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">ปีการศึกษา</label>
-                    <input type="text" name="schoolYear" value={localSettings.schoolYear} onChange={handleChange} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
-                    </div>
-                </div>
-                </div>
-                <div>
-                <h4 className="font-bold text-gray-800 mb-3 border-b pb-2">โลโก้เว็บไซต์</h4>
-                <div className="flex flex-wrap items-center gap-6">
-                    <div className="w-24 h-24 bg-gray-100 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden shrink-0">
-                    {localSettings.logo ? <img src={localSettings.logo} alt="Preview" className="w-full h-full object-cover" /> : <ImageIcon size={32} className="text-gray-400" />}
-                    </div>
-                    <div>
-                    <label className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors shadow-sm inline-block">
-                        อัปโหลดรูปภาพใหม่
-                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                    </label>
-                    <p className="text-xs text-gray-400 mt-2">ขนาดแนะนำ 200x200px</p>
-                    {localSettings.logo && (
-                        <button onClick={() => setLocalSettings({...localSettings, logo: null})} className="text-xs text-red-500 mt-2 hover:underline block">ลบรูปภาพ</button>
-                    )}
-                    </div>
-                </div>
-                </div>
-                <div>
-                <h4 className="font-bold text-gray-800 mb-3 border-b pb-2">จัดการส่วนท้าย (Footer)</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">หัวข้อ Footer</label>
-                    <input type="text" name="footerTitle" value={localSettings.footerTitle} onChange={handleChange} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
-                    </div>
-                    <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-600 mb-1">สโลแกน / คำอธิบายเพิ่มเติม</label>
-                    <textarea name="footerSlogan" value={localSettings.footerSlogan} onChange={handleChange} rows="2" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
-                    </div>
-                    <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">อีเมลติดต่อ</label>
-                    <input type="text" name="footerEmail" value={localSettings.footerEmail} onChange={handleChange} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
-                    </div>
-                    <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">เบอร์โทรศัพท์</label>
-                    <input type="text" name="footerPhone" value={localSettings.footerPhone} onChange={handleChange} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
-                    </div>
-                    <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-600 mb-1">สถานที่จัดการแข่งขัน</label>
-                    <input type="text" name="footerLocation" value={localSettings.footerLocation} onChange={handleChange} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
-                    </div>
-                    <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-600 mb-1">ข้อความลิขสิทธิ์</label>
-                    <input type="text" name="footerCopyright" value={localSettings.footerCopyright} onChange={handleChange} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
-                    </div>
-                </div>
-                </div>
-                <div className="pt-4 flex justify-end">
-                <button onClick={handleSave} className="bg-[#cc0066] text-white px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-pink-700 shadow-md transition-all active:scale-95">
-                    <Save size={18}/> บันทึกการตั้งค่า
-                </button>
-                </div>
-            </div>
-            </div>
-        );
-        };
-
+        // --- Other Admin Panels ---
         const ManageSimpleList = ({ title, icon, placeholder, items, setItems }) => {
-        const [newItem, setNewItem] = useState('');
-        const [editingIdx, setEditingIdx] = useState(null);
-        const [editValue, setEditValue] = useState('');
+            const [newItem, setNewItem] = useState('');
+            const [editingIdx, setEditingIdx] = useState(null);
+            const [editValue, setEditValue] = useState('');
 
-        const handleAdd = () => {
-            if(newItem.trim()) { setItems([...items, newItem.trim()]); setNewItem(''); }
-        };
-        const handleDelete = (idx) => { setItems(items.filter((_, i) => i !== idx)); };
-        const startEdit = (idx, val) => { setEditingIdx(idx); setEditValue(val); };
-        const saveEdit = (idx) => {
-            if(editValue.trim()) { const newArr = [...items]; newArr[idx] = editValue.trim(); setItems(newArr); }
-            setEditingIdx(null);
-        };
+            const handleAdd = () => { if(newItem.trim()) { setItems([...items, newItem.trim()]); setNewItem(''); } };
+            const handleDelete = (idx) => { setItems(items.filter((_, i) => i !== idx)); };
+            const startEdit = (idx, val) => { setEditingIdx(idx); setEditValue(val); };
+            const saveEdit = (idx) => {
+                if(editValue.trim()) { const newArr = [...items]; newArr[idx] = editValue.trim(); setItems(newArr); }
+                setEditingIdx(null);
+            };
 
-        return (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-8">
-            <div className="flex items-center gap-3 mb-6 text-[#cc0066]">
-                <div className="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center">{icon}</div>
-                <h3 className="text-xl font-black text-gray-800">{title}</h3>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                <input type="text" placeholder={placeholder} value={newItem} onChange={e=>setNewItem(e.target.value)} className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#cc0066]" />
-                <button onClick={handleAdd} className="bg-[#cc0066] text-white px-6 py-3 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-pink-700 shadow-md active:scale-95"><Plus size={18}/> เพิ่ม</button>
-            </div>
-
-            <div className="border border-gray-200 rounded-xl overflow-hidden">
-                <ul className="divide-y divide-gray-100">
-                {items.map((item, idx) => (
-                    <li key={idx} className="flex items-center justify-between p-4 hover:bg-gray-50">
-                    {editingIdx === idx ? (
-                        <div className="flex flex-1 gap-3 mr-4">
-                        <input type="text" value={editValue} onChange={e=>setEditValue(e.target.value)} className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm" autoFocus />
-                        <button onClick={()=>saveEdit(idx)} className="bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200"><Check size={16}/></button>
-                        </div>
-                    ) : (
-                        <span className="font-medium text-gray-700">{item}</span>
-                    )}
-                    {editingIdx !== idx && (
-                        <div className="flex gap-2 shrink-0">
-                        <button onClick={()=>startEdit(idx, item)} className="p-2 text-gray-400 hover:text-blue-500 bg-white hover:bg-blue-50 rounded-lg border border-gray-200"><Edit2 size={16}/></button>
-                        <button onClick={()=>handleDelete(idx)} className="p-2 text-gray-400 hover:text-red-500 bg-white hover:bg-red-50 rounded-lg border border-gray-200"><Trash2 size={16}/></button>
-                        </div>
-                    )}
-                    </li>
-                ))}
-                {items.length === 0 && <li className="p-6 text-center text-gray-400">ไม่มีข้อมูล</li>}
-                </ul>
-            </div>
-            </div>
-        );
+            return (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-8">
+                <div className="flex items-center gap-3 mb-6 text-[#cc0066]">
+                    <div className="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center">{icon}</div>
+                    <h3 className="text-xl font-black text-gray-800">{title}</h3>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                    <input type="text" placeholder={placeholder} value={newItem} onChange={e=>setNewItem(e.target.value)} className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#cc0066]" />
+                    <button onClick={handleAdd} className="bg-[#cc0066] text-white px-6 py-3 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-pink-700 shadow-md active:scale-95"><Plus size={18}/> เพิ่ม</button>
+                </div>
+                <div className="border border-gray-200 rounded-xl overflow-hidden">
+                    <ul className="divide-y divide-gray-100">
+                    {items.map((item, idx) => (
+                        <li key={idx} className="flex items-center justify-between p-4 hover:bg-gray-50">
+                        {editingIdx === idx ? (
+                            <div className="flex flex-1 gap-3 mr-4">
+                            <input type="text" value={editValue} onChange={e=>setEditValue(e.target.value)} className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm" autoFocus />
+                            <button onClick={()=>saveEdit(idx)} className="bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200"><Check size={16}/></button>
+                            </div>
+                        ) : ( <span className="font-medium text-gray-700">{item}</span> )}
+                        {editingIdx !== idx && (
+                            <div className="flex gap-2 shrink-0">
+                            <button onClick={()=>startEdit(idx, item)} className="p-2 text-gray-400 hover:text-blue-500 bg-white hover:bg-blue-50 rounded-lg border border-gray-200"><Edit2 size={16}/></button>
+                            <button onClick={()=>handleDelete(idx)} className="p-2 text-gray-400 hover:text-red-500 bg-white hover:bg-red-50 rounded-lg border border-gray-200"><Trash2 size={16}/></button>
+                            </div>
+                        )}
+                        </li>
+                    ))}
+                    </ul>
+                </div>
+                </div>
+            );
         };
 
         const ManageColors = ({ colors, setColors }) => {
-        const [newName, setNewName] = useState('');
-        const [selectedTheme, setSelectedTheme] = useState('bg-purple-500');
+            const [newName, setNewName] = useState('');
+            const [selectedTheme, setSelectedTheme] = useState('bg-purple-500');
 
-        const themeOptions = [
-            { label: 'สีม่วง', bg: 'bg-purple-500', text: 'text-purple-700', border: 'border-purple-500' },
-            { label: 'สีส้ม', bg: 'bg-orange-500', text: 'text-orange-700', border: 'border-orange-500' },
-            { label: 'สีแดง', bg: 'bg-red-500', text: 'text-red-700', border: 'border-red-500' },
-            { label: 'สีฟ้า', bg: 'bg-blue-500', text: 'text-blue-700', border: 'border-blue-500' },
-            { label: 'สีเขียว', bg: 'bg-green-500', text: 'text-green-700', border: 'border-green-500' },
-            { label: 'สีชมพู', bg: 'bg-pink-500', text: 'text-pink-700', border: 'border-pink-500' },
-            { label: 'สีเหลือง', bg: 'bg-yellow-400', text: 'text-yellow-700', border: 'border-yellow-400' },
-        ];
+            const themeOptions = [
+                { label: 'สีม่วง', bg: 'bg-purple-500', text: 'text-purple-700', border: 'border-purple-500' },
+                { label: 'สีส้ม', bg: 'bg-orange-500', text: 'text-orange-700', border: 'border-orange-500' },
+                { label: 'สีแดง', bg: 'bg-red-500', text: 'text-red-700', border: 'border-red-500' },
+                { label: 'สีฟ้า', bg: 'bg-blue-500', text: 'text-blue-700', border: 'border-blue-500' },
+                { label: 'สีเขียว', bg: 'bg-green-500', text: 'text-green-700', border: 'border-green-500' },
+                { label: 'สีชมพู', bg: 'bg-pink-500', text: 'text-pink-700', border: 'border-pink-500' },
+                { label: 'สีเหลือง', bg: 'bg-yellow-400', text: 'text-yellow-700', border: 'border-yellow-400' },
+            ];
 
-        const handleAdd = () => {
-            if(newName.trim()) {
-            const theme = themeOptions.find(t => t.bg === selectedTheme);
-            setColors([...colors, { id: `color_${Date.now()}`, name: newName.trim(), bg: theme.bg, text: theme.text, border: theme.border, score: 0, gold: 0, silver: 0, bronze: 0, rank: colors.length + 1 }]);
-            setNewName('');
-            }
-        };
+            const handleAdd = () => {
+                if(newName.trim()) {
+                const theme = themeOptions.find(t => t.bg === selectedTheme);
+                setColors([...colors, { id: `color_${Date.now()}`, name: newName.trim(), bg: theme.bg, text: theme.text, border: theme.border, score: 0, gold: 0, silver: 0, bronze: 0, rank: colors.length + 1 }]);
+                setNewName('');
+                }
+            };
+            const handleDelete = (id) => { setColors(colors.filter(c => c.id !== id)); };
 
-        const handleDelete = (id) => { setColors(colors.filter(c => c.id !== id)); };
-
-        return (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-8">
-            <div className="flex items-center gap-3 mb-6 text-[#cc0066]">
-                <div className="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center"><Palette size={20} /></div>
-                <h3 className="text-xl font-black text-gray-800">จัดการคณะสี</h3>
-            </div>
-            
-            <div className="flex flex-col md:flex-row gap-3 mb-6">
-                <input type="text" placeholder="ชื่อคณะสี (เช่น สีม่วง)" value={newName} onChange={e=>setNewName(e.target.value)} className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#cc0066]" />
-                <select value={selectedTheme} onChange={e=>setSelectedTheme(e.target.value)} className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#cc0066]">
-                {themeOptions.map(t => <option key={t.bg} value={t.bg}>{t.label}</option>)}
-                </select>
-                <button onClick={handleAdd} className="bg-[#cc0066] text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-pink-700 shadow-md active:scale-95"><Plus size={18}/> เพิ่มคณะสี</button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {colors.map((color) => (
-                <div key={color.id} className="border border-gray-200 rounded-xl p-4 flex items-center justify-between bg-white shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full ${color.bg} shadow-sm border-2 border-white`}></div>
-                        <span className="font-bold text-gray-800">{color.name}</span>
-                    </div>
-                    <button onClick={()=>handleDelete(color.id)} className="p-2 text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 rounded-lg"><Trash2 size={16}/></button>
+            return (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-8">
+                <div className="flex items-center gap-3 mb-6 text-[#cc0066]">
+                    <div className="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center"><Palette size={20} /></div>
+                    <h3 className="text-xl font-black text-gray-800">จัดการคณะสี</h3>
                 </div>
-                ))}
-            </div>
-            </div>
-        );
+                <div className="flex flex-col md:flex-row gap-3 mb-6">
+                    <input type="text" placeholder="ชื่อคณะสี (เช่น สีม่วง)" value={newName} onChange={e=>setNewName(e.target.value)} className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#cc0066]" />
+                    <select value={selectedTheme} onChange={e=>setSelectedTheme(e.target.value)} className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#cc0066]">
+                    {themeOptions.map(t => <option key={t.bg} value={t.bg}>{t.label}</option>)}
+                    </select>
+                    <button onClick={handleAdd} className="bg-[#cc0066] text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-pink-700 shadow-md active:scale-95"><Plus size={18}/> เพิ่มคณะสี</button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {colors.map((color) => (
+                    <div key={color.id} className="border border-gray-200 rounded-xl p-4 flex items-center justify-between bg-white shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-full ${color.bg} shadow-sm border-2 border-white`}></div>
+                            <span className="font-bold text-gray-800">{color.name}</span>
+                        </div>
+                        <button onClick={()=>handleDelete(color.id)} className="p-2 text-gray-400 hover:text-red-500 bg-gray-50 hover:bg-red-50 rounded-lg"><Trash2 size={16}/></button>
+                    </div>
+                    ))}
+                </div>
+                </div>
+            );
         };
 
 
         // --- ADMIN VIEW ---
         const AdminView = ({ setViewState, appColors, setAppColors, appSports, setAppSports, appAges, setAppAges, appSettings, setAppSettings, schedules, dateOptions, onUpdateMatch }) => {
-        const [activeTab, setActiveTab] = useState('matches');
-        const [selectedMatch, setSelectedMatch] = useState(null);
-        const [filterSport, setFilterSport] = useState('All');
-        const [search, setSearch] = useState('');
-        const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+            const [activeTab, setActiveTab] = useState('matches');
+            const [selectedMatch, setSelectedMatch] = useState(null);
+            const [filterSport, setFilterSport] = useState('All');
+            const [search, setSearch] = useState('');
+            const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-        const filteredSchedules = useMemo(() => {
-            return schedules.filter(s => {
-            const matchSport = filterSport === 'All' || s.sport === filterSport;
-            const matchSearch = (s.versus || '').includes(search) || (s.age || '').includes(search);
-            return matchSport && matchSearch;
-            });
-        }, [schedules, filterSport, search]);
+            const filteredSchedules = useMemo(() => {
+                return schedules.filter(s => {
+                const matchSport = filterSport === 'All' || s.sport === filterSport;
+                const matchSearch = (s.versus || '').includes(search) || (s.age || '').includes(search);
+                return matchSport && matchSearch;
+                });
+            }, [schedules, filterSport, search]);
 
-        const handleSaveScore = (matchId, winnerId) => {
-            onUpdateMatch(matchId, winnerId);
-        }
-
-        return (
-            <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
-            {isMobileMenuOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setIsMobileMenuOpen(false)} />}
-            <aside className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 flex flex-col h-full shrink-0 transition-transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-                <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="bg-[#cc0066] text-white p-3 rounded-2xl shadow-md"><Lock size={24} /></div>
-                    <div><h1 className="font-black text-gray-800 text-base">โหมดกรรมการ</h1></div>
-                </div>
-                <button className="md:hidden text-gray-400" onClick={() => setIsMobileMenuOpen(false)}><X size={20}/></button>
-                </div>
-                <div className="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
-                <p className="text-xs font-bold text-gray-400 mb-2 px-2 uppercase">จัดการแข่งขัน</p>
-                <button onClick={() => {setActiveTab('matches'); setIsMobileMenuOpen(false);}} className={`flex items-center gap-3 px-4 py-3.5 text-sm w-full text-left rounded-xl transition-colors ${activeTab === 'matches' ? 'bg-[#cc0066] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>
-                    <LayoutDashboard size={18}/><span className="font-bold">บันทึกผลการแข่งขัน</span>
-                </button>
-                
-                <p className="text-xs font-bold text-gray-400 mt-6 mb-2 px-2 uppercase">ตั้งค่าระบบ</p>
-                <button onClick={() => {setActiveTab('sports'); setIsMobileMenuOpen(false);}} className={`flex items-center gap-3 px-4 py-3.5 text-sm w-full text-left rounded-xl transition-colors ${activeTab === 'sports' ? 'bg-[#cc0066] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>
-                    <Dribbble size={18}/><span className="font-bold">ชนิดกีฬา</span>
-                </button>
-                <button onClick={() => {setActiveTab('categories'); setIsMobileMenuOpen(false);}} className={`flex items-center gap-3 px-4 py-3.5 text-sm w-full text-left rounded-xl transition-colors ${activeTab === 'categories' ? 'bg-[#cc0066] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>
-                    <Users size={18}/><span className="font-bold">รุ่นอายุ / ประเภท</span>
-                </button>
-                <button onClick={() => {setActiveTab('colors'); setIsMobileMenuOpen(false);}} className={`flex items-center gap-3 px-4 py-3.5 text-sm w-full text-left rounded-xl transition-colors ${activeTab === 'colors' ? 'bg-[#cc0066] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>
-                    <Palette size={18}/><span className="font-bold">คณะสี</span>
-                </button>
-                <button onClick={() => {setActiveTab('settings'); setIsMobileMenuOpen(false);}} className={`flex items-center gap-3 px-4 py-3.5 text-sm w-full text-left rounded-xl transition-colors ${activeTab === 'settings' ? 'bg-[#cc0066] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>
-                    <SettingsIcon size={18}/><span className="font-bold">ตั้งค่าเว็บไซต์</span>
-                </button>
-                </div>
-                <div className="p-4 border-t border-gray-100 bg-white">
-                <button onClick={() => setViewState('public')} className="flex items-center justify-center gap-2 w-full py-3 bg-gray-100 text-gray-600 rounded-xl font-bold text-sm hover:bg-gray-200">
-                    <LogOut size={16}/> กลับหน้าหลัก
-                </button>
-                </div>
-            </aside>
-            
-            <main className="flex-1 flex flex-col h-full overflow-hidden bg-gray-50/50">
-                <header className="bg-white border-b border-gray-200 h-20 flex items-center justify-between px-4 md:px-6 shrink-0 shadow-sm z-0">
-                <div className="flex items-center gap-4">
-                    <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 md:hidden text-gray-600 hover:bg-gray-100 rounded-lg"><Menu size={24} /></button>
-                    <h2 className="text-xl font-black text-gray-800 hidden md:block border-l-4 border-[#cc0066] pl-3">{appSettings.siteName}</h2>
-                    <h2 className="text-lg font-black text-[#cc0066] md:hidden">โหมดจัดการ</h2>
-                </div>
-                <div className="flex items-center gap-4">
-                    <div className="hidden md:flex items-center gap-2 bg-pink-50 text-[#cc0066] px-4 py-2 rounded-full border border-pink-100">
-                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                    <span className="text-sm font-bold">Admin Active</span>
-                    </div>
-                </div>
-                </header>
-                
-                <div className="flex-1 overflow-y-auto p-4 md:p-8">
-                    {activeTab === 'matches' && (
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-8">
-                        <div className="flex flex-col mb-6">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-pink-100 text-[#cc0066] flex items-center justify-center shrink-0"><Activity size={24} /></div>
-                            <div><h3 className="text-lg md:text-xl font-black text-gray-800">บันทึกผลการแข่งขัน</h3><p className="text-xs text-gray-500">คลิกที่ปุ่ม "บันทึกผล" เพื่อระบุผู้ชนะ</p></div>
-                        </div>
-                        <div className="flex flex-col md:flex-row gap-3 mb-4">
-                            <div className="relative flex-1">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                            <input type="text" placeholder="ค้นหารุ่น หรือ ทีม..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-pink-500" />
-                            </div>
-                            <select value={filterSport} onChange={(e) => setFilterSport(e.target.value)} className="py-3 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 focus:outline-none focus:border-pink-500">
-                            <option value="All">ทุกกีฬา</option>
-                            {appSports.map(d => <option key={d} value={d}>{d}</option>)}
-                            </select>
-                        </div>
-                        </div>
-            
-                        <div className="overflow-x-auto rounded-xl border border-gray-200">
-                        <table className="w-full text-sm text-left bg-white min-w-[600px]">
-                            <thead className="bg-gray-100 text-gray-700 border-b border-gray-200">
-                            <tr><th className="py-4 px-4 font-bold">วันที่/เวลา</th><th className="py-4 px-4 font-bold">ชนิดกีฬา</th><th className="py-4 px-4 font-bold">รุ่นอายุ</th><th className="py-4 px-4 font-bold">คู่แข่งขัน</th><th className="py-4 px-4 font-bold text-center">จัดการ</th></tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                            {filteredSchedules.length > 0 ? filteredSchedules.map((match) => (
-                                <tr key={match.id} className="hover:bg-gray-50">
-                                <td className="py-4 px-4"><div className="font-bold text-gray-700 whitespace-nowrap">{match.date}</div><div className="text-xs text-gray-500 whitespace-nowrap">{match.time}</div></td>
-                                <td className="py-4 px-4 font-bold text-[#cc0066]">
-                                    <div className="flex items-center gap-2 mt-2 whitespace-nowrap">{getSportIcon(match.sport)} {match.sport}</div>
-                                </td>
-                                <td className="py-4 px-4 text-gray-700 font-medium whitespace-nowrap">
-                                    {match.age}
-                                    {match.round === 'ชิงชนะเลิศ' && <div className="mt-1 text-[10px] bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700 px-2 py-0.5 rounded border border-amber-200 inline-block font-bold">ชิงชนะเลิศ</div>}
-                                </td>
-                                <td className="py-4 px-4">
-                                    <div className="flex items-center gap-1.5 whitespace-nowrap">
-                                    {(match.versus || '').split(' vs ').map((team, idx) => {
-                                        const colorData = appColors.find(c => c.id === matchColorText(team, appColors));
-                                        return (
-                                        <React.Fragment key={idx}>
-                                            {idx > 0 && <span className="text-gray-300 text-xs font-medium">vs</span>}
-                                            <span className={`px-2.5 py-1 rounded-md text-xs font-bold shadow-sm ${colorData ? `${colorData.bg} text-white` : 'bg-gray-200 text-gray-700'}`}>{team}</span>
-                                        </React.Fragment>
-                                        )
-                                    })}
-                                    </div>
-                                </td>
-                                <td className="py-4 px-4 text-center">
-                                    <button onClick={() => setSelectedMatch(match)} className={`px-4 py-2 rounded-xl text-xs font-black tracking-wide whitespace-nowrap transition-all duration-300 active:scale-95 ${match.status === 'announced' ? 'bg-white border-2 border-gray-200 text-gray-600 hover:bg-gray-100' : 'bg-[#cc0066] text-white shadow-[0_4px_12px_rgba(204,0,102,0.3)] hover:bg-[#b30059]'}`}>
-                                        {match.status === 'announced' ? 'แก้ไขผล' : 'บันทึกผล'}
-                                    </button>
-                                </td>
-                                </tr>
-                            )) : (<tr><td colSpan="5" className="py-12 text-center text-gray-400">ไม่มีข้อมูล</td></tr>)}
-                            </tbody>
-                        </table>
-                        </div>
-                    </div>
-                    )}
-
-                    {activeTab === 'sports' && <ManageSimpleList title="จัดการชนิดกีฬา" icon={<Dribbble size={20}/>} placeholder="ระบุชื่อกีฬาใหม่..." items={appSports} setItems={setAppSports} />}
-                    {activeTab === 'categories' && <ManageSimpleList title="จัดการรุ่นอายุ/ประเภท" icon={<Users size={20}/>} placeholder="ระบุรุ่นอายุใหม่ (เช่น 18ปีหญิง)..." items={appAges} setItems={setAppAges} />}
-                    {activeTab === 'colors' && <ManageColors colors={appColors} setColors={setAppColors} />}
-                    {activeTab === 'settings' && <ManageSettings settings={appSettings} setSettings={setAppSettings} />}
-
-                </div>
-            </main>
-            <ScoreEntryModal match={selectedMatch} onClose={() => setSelectedMatch(null)} appColors={appColors} onSave={onUpdateMatch} />
-            </div>
-        );
-        };
-
-
-        // === MAIN APP ===
-        function App() {
-        const [viewState, setViewState] = useState('loading'); 
-        const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
-        const [showPinModal, setShowPinModal] = useState(false);
-
-        // States (Using LocalStorage to prevent data reset)
-        const [appColors, setAppColors] = useLocalStorage('appColors', initialTeamColors);
-        const [appSports, setAppSports] = useLocalStorage('appSports', initialSports);
-        const [appAges, setAppAges] = useLocalStorage('appAges', initialAges);
-        const [appSettings, setAppSettings] = useLocalStorage('appSettings', initialSettings);
-        const [activeSchedules, setActiveSchedules] = useLocalStorage('activeSchedules', mockSchedules);
-
-        useEffect(() => {
-            const timer = setTimeout(() => setViewState('public'), 800);
-            return () => clearTimeout(timer);
-        }, []);
-
-        const handleUpdateMatch = (matchId, winnerId) => {
-            setActiveSchedules(prev => 
-            prev.map(s => s.id === matchId ? { ...s, status: 'announced', winner: winnerId } : s)
-            );
-        };
-
-        if (viewState === 'loading') {
             return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-[#380222] text-white">
-                <div className="relative flex items-center justify-center mb-8">
-                <div className="absolute w-32 h-32 border-4 border-pink-500/30 rounded-full border-t-pink-500 animate-spin"></div>
-                <div className="absolute w-28 h-28 border-4 border-dashed border-pink-400/20 rounded-full animate-[spin_3s_linear_reverse]"></div>
-                <div className="bg-pink-500 p-5 rounded-2xl relative z-10 shadow-[0_0_30px_rgba(236,72,153,0.5)]"><Activity size={40} className="text-white" /></div>
+                <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
+                {isMobileMenuOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setIsMobileMenuOpen(false)} />}
+                <aside className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 flex flex-col h-full shrink-0 transition-transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+                    <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-[#cc0066] text-white p-3 rounded-2xl shadow-md"><Lock size={24} /></div>
+                        <div><h1 className="font-black text-gray-800 text-base">โหมดกรรมการ</h1></div>
+                    </div>
+                    <button className="md:hidden text-gray-400" onClick={() => setIsMobileMenuOpen(false)}><X size={20}/></button>
+                    </div>
+                    <div className="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
+                    <p className="text-xs font-bold text-gray-400 mb-2 px-2 uppercase">จัดการแข่งขัน</p>
+                    <button onClick={() => {setActiveTab('matches'); setIsMobileMenuOpen(false);}} className={`flex items-center gap-3 px-4 py-3.5 text-sm w-full text-left rounded-xl transition-colors ${activeTab === 'matches' ? 'bg-[#cc0066] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>
+                        <LayoutDashboard size={18}/><span className="font-bold">บันทึกผลการแข่งขัน</span>
+                    </button>
+                    
+                    <p className="text-xs font-bold text-gray-400 mt-6 mb-2 px-2 uppercase">ตั้งค่าระบบ</p>
+                    <button onClick={() => {setActiveTab('sports'); setIsMobileMenuOpen(false);}} className={`flex items-center gap-3 px-4 py-3.5 text-sm w-full text-left rounded-xl transition-colors ${activeTab === 'sports' ? 'bg-[#cc0066] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>
+                        <Dribbble size={18}/><span className="font-bold">ชนิดกีฬา</span>
+                    </button>
+                    <button onClick={() => {setActiveTab('categories'); setIsMobileMenuOpen(false);}} className={`flex items-center gap-3 px-4 py-3.5 text-sm w-full text-left rounded-xl transition-colors ${activeTab === 'categories' ? 'bg-[#cc0066] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>
+                        <Users size={18}/><span className="font-bold">รุ่นอายุ / ประเภท</span>
+                    </button>
+                    <button onClick={() => {setActiveTab('colors'); setIsMobileMenuOpen(false);}} className={`flex items-center gap-3 px-4 py-3.5 text-sm w-full text-left rounded-xl transition-colors ${activeTab === 'colors' ? 'bg-[#cc0066] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>
+                        <Palette size={18}/><span className="font-bold">คณะสี</span>
+                    </button>
+                    <button onClick={() => {setActiveTab('settings'); setIsMobileMenuOpen(false);}} className={`flex items-center gap-3 px-4 py-3.5 text-sm w-full text-left rounded-xl transition-colors ${activeTab === 'settings' ? 'bg-[#cc0066] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>
+                        <SettingsIcon size={18}/><span className="font-bold">ตั้งค่าเว็บไซต์</span>
+                    </button>
+                    </div>
+                    <div className="p-4 border-t border-gray-100 bg-white">
+                    <button onClick={() => setViewState('public')} className="flex items-center justify-center gap-2 w-full py-3 bg-gray-100 text-gray-600 rounded-xl font-bold text-sm hover:bg-gray-200">
+                        <LogOut size={16}/> กลับหน้าหลัก
+                    </button>
+                    </div>
+                </aside>
+                
+                <main className="flex-1 flex flex-col h-full overflow-hidden bg-gray-50/50">
+                    <header className="bg-white border-b border-gray-200 h-20 flex items-center justify-between px-4 md:px-6 shrink-0 shadow-sm z-0">
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 md:hidden text-gray-600 hover:bg-gray-100 rounded-lg"><Menu size={24} /></button>
+                        <h2 className="text-xl font-black text-gray-800 hidden md:block border-l-4 border-[#cc0066] pl-3">{appSettings.siteName}</h2>
+                        <h2 className="text-lg font-black text-[#cc0066] md:hidden">โหมดจัดการ</h2>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="hidden md:flex items-center gap-2 bg-pink-50 text-[#cc0066] px-4 py-2 rounded-full border border-pink-100">
+                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        <span className="text-sm font-bold">Local Database Active</span>
+                        </div>
+                    </div>
+                    </header>
+                    
+                    <div className="flex-1 overflow-y-auto p-4 md:p-8">
+                        {activeTab === 'matches' && (
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-8">
+                            <div className="flex flex-col mb-6">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-pink-100 text-[#cc0066] flex items-center justify-center shrink-0"><Activity size={24} /></div>
+                                <div><h3 className="text-lg md:text-xl font-black text-gray-800">บันทึกผลการแข่งขัน</h3></div>
+                            </div>
+                            <div className="flex flex-col md:flex-row gap-3 mb-4">
+                                <div className="relative flex-1">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                <input type="text" placeholder="ค้นหารุ่น หรือ ทีม..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-pink-500" />
+                                </div>
+                                <select value={filterSport} onChange={(e) => setFilterSport(e.target.value)} className="py-3 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 focus:outline-none focus:border-pink-500">
+                                <option value="All">ทุกกีฬา</option>
+                                {appSports.map(d => <option key={d} value={d}>{d}</option>)}
+                                </select>
+                            </div>
+                            </div>
+                
+                            <div className="overflow-x-auto rounded-xl border border-gray-200">
+                            <table className="w-full text-sm text-left bg-white min-w-[600px]">
+                                <thead className="bg-gray-100 text-gray-700 border-b border-gray-200">
+                                <tr><th className="py-4 px-4 font-bold">วันที่/เวลา</th><th className="py-4 px-4 font-bold">ชนิดกีฬา</th><th className="py-4 px-4 font-bold">รุ่นอายุ</th><th className="py-4 px-4 font-bold">คู่แข่งขัน</th><th className="py-4 px-4 font-bold text-center">จัดการ</th></tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                {filteredSchedules.length > 0 ? filteredSchedules.map((match) => (
+                                    <tr key={match.id} className="hover:bg-gray-50">
+                                    <td className="py-4 px-4"><div className="font-bold text-gray-700">{match.date}</div><div className="text-xs text-gray-500">{match.time}</div></td>
+                                    <td className="py-4 px-4 font-bold text-[#cc0066] flex items-center gap-2 mt-2">{getSportIcon(match.sport)} {match.sport}</td>
+                                    <td className="py-4 px-4 text-gray-700 font-medium">
+                                        {match.age}
+                                        {match.round === 'ชิงชนะเลิศ' && <div className="mt-1 text-[10px] bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-700 px-2 py-0.5 rounded border border-amber-200 inline-block font-bold">ชิงชนะเลิศ</div>}
+                                    </td>
+                                    <td className="py-4 px-4">
+                                        <div className="flex items-center gap-1.5">
+                                        {(match.versus || '').split(' vs ').map((team, idx) => {
+                                            const colorData = appColors.find(c => c.id === matchColorText(team, appColors));
+                                            return (
+                                            <React.Fragment key={idx}>
+                                                {idx > 0 && <span className="text-gray-300 text-xs font-medium">vs</span>}
+                                                <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${colorData ? `${colorData.bg} text-white` : 'bg-gray-200 text-gray-700'}`}>{team}</span>
+                                            </React.Fragment>
+                                            )
+                                        })}
+                                        </div>
+                                        {match.status === 'announced' && match.rawScore && <div className="text-xs font-bold text-green-600 mt-1">สกอร์: {match.rawScore}</div>}
+                                    </td>
+                                    <td className="py-4 px-4 text-center">
+                                        <button onClick={() => setSelectedMatch(match)} className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${match.status === 'announced' ? 'bg-white border-2 border-gray-200 text-gray-600 hover:bg-gray-100' : 'bg-[#cc0066] text-white shadow-md hover:bg-pink-700'}`}>
+                                            {match.status === 'announced' ? 'แก้ไขผล' : 'บันทึกผล'}
+                                        </button>
+                                    </td>
+                                    </tr>
+                                )) : (<tr><td colSpan="5" className="py-12 text-center text-gray-400">ไม่มีข้อมูล</td></tr>)}
+                                </tbody>
+                            </table>
+                            </div>
+                        </div>
+                        )}
+
+                        {activeTab === 'sports' && <ManageSimpleList title="จัดการชนิดกีฬา" icon={<Dribbble size={20}/>} placeholder="ระบุชื่อกีฬาใหม่..." items={appSports} setItems={setAppSports} />}
+                        {activeTab === 'categories' && <ManageSimpleList title="จัดการรุ่นอายุ/ประเภท" icon={<Users size={20}/>} placeholder="ระบุรุ่นอายุใหม่ (เช่น 18ปีหญิง)..." items={appAges} setItems={setAppAges} />}
+                        {activeTab === 'colors' && <ManageColors colors={appColors} setColors={setAppColors} />}
+                        {activeTab === 'settings' && <ManageSettings settings={appSettings} setSettings={setAppSettings} />}
+
+                    </div>
+                </main>
+                <ScoreEntryModal match={selectedMatch} onClose={() => setSelectedMatch(null)} appColors={appColors} onSave={onUpdateMatch} />
                 </div>
-                <h2 className="text-pink-400 text-sm tracking-widest mb-4 font-light">{appSettings.siteName}</h2>
-                <h1 className="text-2xl font-bold mb-4 tracking-wide">กำลังเตรียมหน้าเว็บไซต์...</h1>
-            </div>
             );
-        }
+        };
 
-        return (
-            <div className="relative h-screen w-full bg-gray-50">
-            {viewState === 'public' ? (
-                <PublicView 
-                viewState={viewState} setViewState={setViewState} 
-                isAdminAuthenticated={isAdminAuthenticated} setShowPinModal={setShowPinModal} 
-                appColors={appColors} appSports={appSports} appSettings={appSettings}
-                schedules={activeSchedules} dateOptions={dateOptions}
-                /> 
-            ) : (
-                <AdminView 
-                viewState={viewState} setViewState={setViewState}
-                appColors={appColors} setAppColors={setAppColors}
-                appSports={appSports} setAppSports={setAppSports}
-                appAges={appAges} setAppAges={setAppAges}
-                appSettings={appSettings} setAppSettings={setAppSettings}
-                schedules={activeSchedules} dateOptions={dateOptions}
-                onUpdateMatch={handleUpdateMatch}
+
+        // === MAIN APP (LOCAL STORAGE MODE - ป้องกันเว็บขาว 100%) ===
+        function App() {
+            const [viewState, setViewState] = useState('loading'); 
+            const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+            const [showPinModal, setShowPinModal] = useState(false);
+
+            // States (Using LocalStorage to prevent data reset on refresh)
+            const [appColors, setAppColors] = useLocalStorage('appColors_v2', initialTeamColors);
+            const [appSports, setAppSports] = useLocalStorage('appSports_v2', initialSports);
+            const [appAges, setAppAges] = useLocalStorage('appAges_v2', initialAges);
+            const [appSettings, setAppSettings] = useLocalStorage('appSettings_v2', initialSettings);
+            const [activeSchedules, setActiveSchedules] = useLocalStorage('activeSchedules_v2', mockSchedules);
+
+            useEffect(() => {
+                const timer = setTimeout(() => setViewState('public'), 800);
+                return () => clearTimeout(timer);
+            }, []);
+
+            const handleUpdateMatch = (matchId, resultData) => {
+                setActiveSchedules(prev => 
+                    prev.map(s => s.id === matchId ? { ...s, ...resultData } : s)
+                );
+            };
+
+            // คำนวณเหรียญอัตโนมัติจากผลการแข่งขัน
+            const calculatedColors = useMemo(() => {
+                return appColors.map(team => {
+                    let gold = 0; let silver = 0; let bronze = 0;
+                    activeSchedules.forEach(match => {
+                        if (match.status === 'announced') {
+                            if (match.round.includes('ชิงชนะเลิศ') || match.round.includes('ชิง 1')) {
+                                if (match.winner === team.id) gold += 1;
+                                if (match.loser === team.id) silver += 1; // สมมติว่าแพ้ชิงได้เงิน
+                            }
+                        }
+                    });
+                    const score = (gold * 5) + (silver * 3) + (bronze * 1);
+                    return { ...team, gold, silver, bronze, score };
+                }).sort((a, b) => {
+                    if (b.gold !== a.gold) return b.gold - a.gold;
+                    if (b.silver !== a.silver) return b.silver - a.silver;
+                    return b.bronze - a.bronze;
+                }).map((t, idx) => ({ ...t, rank: idx + 1 }));
+            }, [appColors, activeSchedules]);
+
+            if (viewState === 'loading') {
+                return (
+                <div className="flex flex-col items-center justify-center min-h-screen bg-[#380222] text-white">
+                    <div className="relative flex items-center justify-center mb-8">
+                    <div className="absolute w-32 h-32 border-4 border-pink-500/30 rounded-full border-t-pink-500 animate-spin"></div>
+                    <div className="absolute w-28 h-28 border-4 border-dashed border-pink-400/20 rounded-full animate-[spin_3s_linear_reverse]"></div>
+                    <div className="bg-pink-500 p-5 rounded-2xl relative z-10 shadow-[0_0_30px_rgba(236,72,153,0.5)]"><Activity size={40} className="text-white" /></div>
+                    </div>
+                    <h2 className="text-pink-400 text-sm tracking-widest mb-4 font-light">{appSettings.siteName}</h2>
+                    <h1 className="text-2xl font-bold mb-4 tracking-wide">กำลังเตรียมหน้าเว็บไซต์...</h1>
+                </div>
+                );
+            }
+
+            return (
+                <div className="relative h-screen w-full bg-gray-50">
+                {viewState === 'public' ? (
+                    <PublicView 
+                    viewState={viewState} setViewState={setViewState} 
+                    isAdminAuthenticated={isAdminAuthenticated} setShowPinModal={setShowPinModal} 
+                    appColors={appColors} calculatedColors={calculatedColors} appSports={appSports} appSettings={appSettings}
+                    schedules={activeSchedules} dateOptions={dateOptions}
+                    /> 
+                ) : (
+                    <AdminView 
+                    viewState={viewState} setViewState={setViewState}
+                    appColors={appColors} setAppColors={setAppColors}
+                    appSports={appSports} setAppSports={setAppSports}
+                    appAges={appAges} setAppAges={setAppAges}
+                    appSettings={appSettings} setAppSettings={setAppSettings}
+                    schedules={activeSchedules} dateOptions={dateOptions}
+                    onUpdateMatch={handleUpdateMatch}
+                    />
+                )}
+
+                <PinModal 
+                    isOpen={showPinModal} 
+                    onClose={() => setShowPinModal(false)}
+                    onSuccess={() => { setIsAdminAuthenticated(true); setShowPinModal(false); setViewState('admin'); }}
                 />
-            )}
-
-            <PinModal 
-                isOpen={showPinModal} 
-                onClose={() => setShowPinModal(false)}
-                onSuccess={() => { setIsAdminAuthenticated(true); setShowPinModal(false); setViewState('admin'); }}
-            />
-            </div>
-        );
+                </div>
+            );
         }
 
         // Render App
